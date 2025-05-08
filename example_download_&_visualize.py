@@ -13,6 +13,5 @@ for i in range(2):
         img_bytes = ds[i][img_type]  # already bytes!
         img = Image.open(BytesIO(img_bytes))
         img.save(f"{img_type}_{i}.png")
-
-
+        
 print("Images saved!")
