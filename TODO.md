@@ -11,8 +11,16 @@
 - create the database functions to read and edit the database (similarities) => to get the most relevant documents
 - create the functions to run the model
 - create the functions to handle the conversation history, roles, system/user/assistant prompts
-- 
-- 
+- create a basis user interface (eg. React)
 
 ## Training models 
+- Find a poor quality retrieval model
+- create the training data set based on the "machine learning papers"
+- make the training code (fine-tuning)
+- run the code
+- test & benchmark
+
+## Reports & video
+
+
 
