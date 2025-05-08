@@ -1,3 +1,5 @@
+Link to dataset : https://huggingface.co/datasets/staghado/ArXiv-tables
+
 # Things to be done : 
 
 ## Preliminary analysis
