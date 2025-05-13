@@ -4,8 +4,10 @@ Polimi Group School Project
 
 
 # Libraries
-use requirements.txt to install the required libraries
 
+Works best with python 3.11
+
+Use requirements.txt to install the required libraries
 
 **If you have the following error:
 ```conn.enable_load_extension(True)```
