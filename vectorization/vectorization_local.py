@@ -1,4 +1,4 @@
-# vectorization\vectorization_local.py
+# vectorization/vectorization_local.py
 
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from PIL import Image

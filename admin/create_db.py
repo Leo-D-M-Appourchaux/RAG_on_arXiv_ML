@@ -32,23 +32,6 @@ CREATE TABLE documents (
 )
 """)
 
-# Create virtual table for documents' vector data
-cursor.execute("""
-CREATE VIRTUAL TABLE documents_vectors USING vec0(
-    document_id TEXT PRIMARY KEY,
-    document_vector FLOAT[1536]
-)
-""")
-
-# Create trigger to delete from documents_vectors when a document is deleted
-cursor.execute("""
-CREATE TRIGGER delete_documents_vector
-AFTER DELETE ON documents
-BEGIN
-    DELETE FROM documents_vectors WHERE document_id = OLD(document_id);
-END;
-""")
-
 # Create regular page_images table
 cursor.execute("""
 CREATE TABLE page_images (
