@@ -60,16 +60,16 @@ async def get_page_by_keywords(keywords: list, amount: int) -> list[str]:
 async def combine_search_results(optimized_query: str, keywords: list, max_results: int = 6) -> list[str]:
     print(f"In combine_search_results: {optimized_query}, {keywords}, {max_results}")
     vector_image_ids = await get_similar_vectors(optimized_query, amount=5)
-    keywords_image_ids = await get_page_by_keywords(keywords, amount=5)
+    # keywords_image_ids = await get_page_by_keywords(keywords, amount=5)
 
     print(f"Vector image IDs: {vector_image_ids}")
-    print(f"Keywords image IDs: {keywords_image_ids}")
+    # print(f"Keywords image IDs: {keywords_image_ids}")
 
     # Process image IDs
     seen_ids = set()
     best_image_ids = []
 
-    for image_id in vector_image_ids + keywords_image_ids:
+    for image_id in vector_image_ids: # + keywords_image_ids:
         image_id = str(image_id)
         if image_id not in seen_ids and len(best_image_ids) < max_results:
             best_image_ids.append(image_id)
