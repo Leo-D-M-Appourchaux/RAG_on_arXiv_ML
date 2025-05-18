@@ -64,34 +64,3 @@ async def store_page_vector(document_id: str, page_number: int, vector: list, pa
                     print(f"[{datetime.now()}] ERROR: Page not found for Document: {document_id}, Page: {page_number}")
                     await conn._execute(conn._conn.enable_load_extension, False)
                     raise ValueError("Page not found")
-
-
-
-async def store_document_vector(document_id: str, vector: list) -> None:
-    """Store document vector in the database"""
-    print(f"[{datetime.now()}] Storing document vector in database - Document: {document_id}")
-    print(f"SAMPLE VECTOR: {vector[:1]}")  # Log first element for verification
-
-    # Ensure vector length matches the expected dimension (1536)
-    if len(vector) != 1536:
-        raise ValueError(f"Vector length {len(vector)} does not match expected dimension 1536")
-
-    # Convert vector to binary blob
-    vector_blob = struct.pack(f'<{len(vector)}f', *vector)
-
-    async with aiosqlite.connect(LOCAL_DB_PATH) as conn:
-        await conn._execute(conn._conn.enable_load_extension, True)
-        await conn._execute(sqlite_vec.load, conn._conn)
-
-        query = """
-            INSERT OR REPLACE INTO documents_vectors (document_id, document_vector) VALUES (?, ?)
-        """
-        try:
-            await conn.execute(query, (document_id, vector_blob))
-            await conn.commit()
-            print(f"[{datetime.now()}] Successfully stored document vector for {document_id}")
-        except Exception as e:
-            print(f"[{datetime.now()}] Database error while storing document vector: {str(e)}")
-            raise
-        finally:
-            await conn._execute(conn._conn.enable_load_extension, False)

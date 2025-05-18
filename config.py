@@ -17,4 +17,5 @@ LOCAL_DB_PATH = "database/mydatabase.db"
 
 
 """Vectorization stuff"""
-VECT_MODEL_NAME = "Qwen/Qwen2.5-VL-3B-Instruct"
+VECT_MODEL_NAME = "MrLight/dse-qwen2-2b-mrl-v1"
+VECT_MODEL_LOCAL_PATH = "weights_vect_model"

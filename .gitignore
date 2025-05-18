@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# MacOS
+.DS_Store
+
 # Environments
 .env
 .venv
@@ -18,3 +21,8 @@ NLPenv/
 # Database
 
 *.db
+
+# Storage
+storage/
+docs_to_process/
+weights_vect_model/

@@ -27,8 +27,7 @@ CREATE TABLE documents (
     document_id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total_pages INTEGER NOT NULL,
-    topic TEXT
+    total_pages INTEGER NOT NULL
 )
 """)
 

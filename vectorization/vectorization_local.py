@@ -1,11 +1,11 @@
-# vectorization/vectorization_local.py
+# vectorization\vectorization_local.py
 
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from PIL import Image
 import numpy as np
 import torch, io
 
-from config import VECT_MODEL_NAME
+from config import VECT_MODEL_LOCAL_PATH
 
 
 
@@ -24,11 +24,12 @@ else:
     DEVICE = "cpu"
     print("MPS and CUDA not available. Using CPU.")
 
-print(f"Loading model: {VECT_MODEL_NAME}")
+print(f"Loading model: {VECT_MODEL_LOCAL_PATH}")
 model = HuggingFaceEmbedding(
-    model_name=VECT_MODEL_NAME,
+    model_name=VECT_MODEL_LOCAL_PATH,
     device=DEVICE,
-    trust_remote_code=True
+    trust_remote_code=True,
+    local_files_only=True
 )
 
 

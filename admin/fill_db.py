@@ -253,17 +253,21 @@ async def verify_document_vector(document_id: UUID) -> bool:
 
         conn.row_factory = aiosqlite.Row
         query = """
-            SELECT EXISTS(
-                SELECT 1
-                FROM documents_vectors
-                WHERE document_id = ?
-            ) as has_vector
+            SELECT 
+                (SELECT COUNT(*) FROM page_images WHERE document_id = ?) as total_pages,
+                (SELECT COUNT(*) FROM page_images_vectors piv 
+                 JOIN page_images pi ON pi.page_id = piv.page_id 
+                 WHERE pi.document_id = ?) as pages_with_vectors
         """
-        async with conn.execute(query, (str(document_id),)) as cursor:
+        async with conn.execute(query, (str(document_id), str(document_id))) as cursor:
             result = await cursor.fetchone()
             await conn._execute(conn._conn.enable_load_extension, False)
-            return result['has_vector'] == 1
-
+            
+            if not result or result['total_pages'] == 0:
+                return False
+                
+            # Document is considered complete if at least 90% of pages have vectors
+            return (result['pages_with_vectors'] / result['total_pages']) >= 0.9
 
 
 async def compute_and_store_document_vector(document_id: UUID) -> bool:
@@ -273,45 +277,45 @@ async def compute_and_store_document_vector(document_id: UUID) -> bool:
 
         conn.row_factory = aiosqlite.Row
         
-        # Fetch page vectors
+        # Check if page vectors exist
         vector_query = """
-            SELECT piv.vector_data
+            SELECT COUNT(*) as vector_count
             FROM page_images_vectors piv
             JOIN page_images pi ON piv.page_id = pi.page_id
             WHERE pi.document_id = ?
         """
         async with conn.execute(vector_query, (str(document_id),)) as cursor:
-            results = await cursor.fetchall()
+            result = await cursor.fetchone()
         
-        if not results:
+        if not result or result['vector_count'] == 0:
             print(f"No page vectors found for document {document_id}")
             await conn._execute(conn._conn.enable_load_extension, False)
             return False
         
-        # Convert blobs to vectors
-        vectors = [list(struct.unpack('f' * 1536, row['vector_data'])) for row in results]
-        
-        # Compute mean vector
-        vector_length = 1536
-        vector_sum = [0.0] * vector_length
-        for vector in vectors:
-            for i in range(vector_length):
-                vector_sum[i] += vector[i]
-        mean_vector = [val / len(vectors) for val in vector_sum]
-        
-        # Pack mean vector into blob
-        vector_blob = struct.pack('f' * vector_length, *mean_vector)
-        
-        # Store the document vector
-        insert_query = """
-            INSERT OR REPLACE INTO documents_vectors (document_id, document_vector)
-            VALUES (?, ?)
+        # Count total pages
+        pages_query = """
+            SELECT COUNT(*) as page_count
+            FROM page_images
+            WHERE document_id = ?
         """
-        async with conn.execute(insert_query, (str(document_id), vector_blob)) as cursor:
-            await conn.commit()
-            print(f"Successfully computed and stored document vector for {document_id}")
-            await conn._execute(conn._conn.enable_load_extension, False)
-            return True
+        async with conn.execute(pages_query, (str(document_id),)) as cursor:
+            pages_result = await cursor.fetchone()
+            
+        total_pages = pages_result['page_count'] if pages_result else 0
+        vectorized_pages = result['vector_count']
+        
+        # Document is considered successfully processed if at least 90% of pages have vectors
+        success = total_pages > 0 and (vectorized_pages / total_pages) >= 0.9
+        
+        if success:
+            print(f"Document {document_id} successfully processed: {vectorized_pages}/{total_pages} pages vectorized")
+            # Mark document as completed in memory
+            completed_documents.add(str(document_id))
+        else:
+            print(f"Document {document_id} not fully processed: {vectorized_pages}/{total_pages} pages vectorized")
+            
+        await conn._execute(conn._conn.enable_load_extension, False)
+        return success
 
 
 
@@ -431,13 +435,13 @@ async def monitor_document_progress(document_id: UUID, filename: str, images: Li
 
 
 
-async def process_single_pdf(pdf_path: str, provided_topic: str = None, timeout: int = 3600):
+async def process_single_pdf(pdf_path: str, timeout: int = 3600):
     """Process a single PDF file with consistent IDs across folder and DB"""
     try:
         # Generate document ID - will be used consistently in both folder and DB
         document_id = uuid4()
         filename = os.path.basename(pdf_path)
-        print(f"Processing {pdf_path}" + (f" with topic: {provided_topic}" if provided_topic else ""))
+        print(f"Processing {pdf_path}")
         
         # Track start time
         start_time = time.time()
@@ -455,29 +459,6 @@ async def process_single_pdf(pdf_path: str, provided_topic: str = None, timeout:
         documents_in_process[str(document_id)]["status"] = "metadata"
         documents_in_process[str(document_id)]["total_pages"] = total_pages
 
-        # Extract metadata and classify topic if not provided
-        try:
-            if provided_topic:
-                title, authors, date, description = "", "", "", ""
-                topic = provided_topic
-            else:
-                title, authors, date, description, topic = "", "", "", ""
-                
-            documents_in_process[str(document_id)]["metadata"] = {
-                "title": title,
-                "authors": authors,
-                "date": date,
-                "description": description,
-                "topic": topic
-            }
-        except Exception as e:
-            print(f"Error extracting metadata for {filename}: {str(e)}")
-            title = filename
-            authors = "Unknown"
-            date = "Unknown"
-            description = "Automatically processed document"
-            topic = provided_topic or "Unknown"
-
         # Store PDF to folder with document_id
         documents_in_process[str(document_id)]["status"] = "storing"
         with open(pdf_path, 'rb') as f:
@@ -493,8 +474,6 @@ async def process_single_pdf(pdf_path: str, provided_topic: str = None, timeout:
             document_id=str(document_id),
             title=filename,
             page_texts=text_pages,
-            topic=topic,
-            document_vector=None,  # Will be updated by embedding queue
             page_ids=page_ids  # Pass page_ids to database function
         )
         
@@ -522,7 +501,7 @@ async def process_single_pdf(pdf_path: str, provided_topic: str = None, timeout:
                 resized_image = check_and_resize_for_vect(image_data)
                 await embedding_queue.add_image_task(
                     str(document_id),
-                    title,
+                    filename,
                     resized_image,
                     page_idx,
                     total_pages,
@@ -552,13 +531,13 @@ async def process_single_pdf(pdf_path: str, provided_topic: str = None, timeout:
 
 
 
-async def process_single_image(image_path: str, provided_topic: str = None, timeout: int = 3600):
+async def process_single_image(image_path: str, timeout: int = 3600):
     """Process a single image file as a one-page document"""
     try:
         # Generate document ID - will be used consistently in both folder and DB
         document_id = uuid4()
         filename = os.path.basename(image_path)
-        print(f"Processing image {image_path}" + (f" with topic: {provided_topic}" if provided_topic else ""))
+        print(f"Processing image {image_path}")
         
         # Track start time
         start_time = time.time()
@@ -576,19 +555,9 @@ async def process_single_image(image_path: str, provided_topic: str = None, time
         documents_in_process[str(document_id)]["status"] = "metadata"
         documents_in_process[str(document_id)]["total_pages"] = total_pages
 
-        # Extract metadata and classify topic if not provided
-        try:
-            title = filename
-            topic = provided_topic or "Images"
-                
-            documents_in_process[str(document_id)]["metadata"] = {
-                "title": title,
-                "topic": topic
-            }
-        except Exception as e:
-            print(f"Error with metadata for {filename}: {str(e)}")
-            title = filename
-            topic = provided_topic or "Images"
+        documents_in_process[str(document_id)]["metadata"] = {
+            "title": filename,
+        }
 
         # Store original image to folder with document_id
         documents_in_process[str(document_id)]["status"] = "storing"
@@ -606,8 +575,6 @@ async def process_single_image(image_path: str, provided_topic: str = None, time
             document_id=str(document_id),
             title=filename,
             page_texts=text_pages,
-            topic=topic,
-            document_vector=None,  # Will be updated by embedding queue
             page_ids=page_ids
         )
         
@@ -627,7 +594,7 @@ async def process_single_image(image_path: str, provided_topic: str = None, time
             resized_image = check_and_resize_for_vect(images[0])
             await embedding_queue.add_image_task(
                 str(document_id),
-                title,
+                filename,
                 resized_image,
                 0,  # page_idx
                 total_pages,
@@ -656,7 +623,7 @@ async def process_single_image(image_path: str, provided_topic: str = None, time
 
 
 async def process_pdf_folder(folder_path: str, concurrent_limit: int = 2, timeout: int = 3600):
-    """Process PDFs from subfolders, using subfolder names as topics with concurrency control"""
+    """Process PDFs from subfolders, using subfolder names with concurrency control"""
     successful = 0
     failed = 0
     pending_tasks = []
@@ -664,33 +631,30 @@ async def process_pdf_folder(folder_path: str, concurrent_limit: int = 2, timeou
     # Create a semaphore to limit concurrent processing
     semaphore = asyncio.Semaphore(concurrent_limit)
     
-    async def process_with_semaphore(file_path, topic):
+    async def process_with_semaphore(file_path):
         async with semaphore:
             # Check file extension to determine processing method
             file_ext = os.path.splitext(file_path)[1].lower()
             if file_ext == '.pdf':
-                return await process_single_pdf(file_path, topic, timeout)
+                return await process_single_pdf(file_path, timeout)
             elif file_ext in ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp'):
-                return await process_single_image(file_path, topic, timeout)
+                return await process_single_image(file_path, timeout)
             else:
                 print(f"Unsupported file type: {file_ext}")
                 return None, None
     
     # Walk through all subfolders
     for root, dirs, files in os.walk(folder_path):
-        # Get topic from subfolder name
-        topic = os.path.basename(root)
-        
         # Find PDF, image, and text files
         pdf_files = [f for f in files if f.lower().endswith('.pdf')]
         image_files = [f for f in files if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp'))]
         total_files = len(pdf_files) + len(image_files)
         
         if not total_files:
-            print(f"No PDF or image files found in subfolder: {topic}")
+            print(f"No PDF or image files found in folder: {os.path.basename(root)}")
             continue
         
-        print(f"\nProcessing {len(pdf_files)} PDF files, {len(image_files)} image files from topic: {topic}")
+        print(f"\nProcessing {len(pdf_files)} PDF files, {len(image_files)} image files from folder: {os.path.basename(root)}")
         
         # Launch tasks for all PDFs in this folder
         for pdf_file in pdf_files:
@@ -698,7 +662,7 @@ async def process_pdf_folder(folder_path: str, concurrent_limit: int = 2, timeou
             print(f"\nQueuing PDF: {pdf_file}")
             
             # Create and start the task
-            task = asyncio.create_task(process_with_semaphore(file_path, topic))
+            task = asyncio.create_task(process_with_semaphore(file_path))
             pending_tasks.append((pdf_file, task))
         
         # Launch tasks for all image files in this folder
@@ -707,7 +671,7 @@ async def process_pdf_folder(folder_path: str, concurrent_limit: int = 2, timeou
             print(f"\nQueuing image: {image_file}")
             
             # Create and start the task
-            task = asyncio.create_task(process_with_semaphore(file_path, topic))
+            task = asyncio.create_task(process_with_semaphore(file_path))
             pending_tasks.append((image_file, task))
     
     # Wait for all tasks to complete

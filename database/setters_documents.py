@@ -12,26 +12,18 @@ async def _db_store_pdf_data(
     conn: aiosqlite.Connection,
     document_id: str,
     title: str,
-    total_pages: int,
-    topic: str,
-    document_vector: Optional[List[float]] = None
+    total_pages: int
 ) -> None:
-    print(f"Inputs to store pdf data: {document_id}, {title}, {total_pages}, {topic}, {document_vector}")
+    print(f"Inputs to store pdf data: {document_id}, {title}, {total_pages}")
 
     query = """
         INSERT INTO documents (
-            document_id, title, total_pages, topic
-        ) VALUES (?, ?, ?, ?)
+            document_id, title, total_pages
+        ) VALUES (?, ?, ?)
     """
     await conn.execute(query, (
-        document_id, title, total_pages, topic
+        document_id, title, total_pages
     ))
-    if document_vector:
-        vector_query = """
-            INSERT INTO documents_vectors (document_id, document_vector)
-            VALUES (?, ?)
-        """
-        await conn.execute(vector_query, (document_id, document_vector))
 
 
 
@@ -70,16 +62,14 @@ async def db_store_pdf_file(
     document_id: str,
     title: str,
     page_texts: List[str],
-    topic: str,
     vectors: Optional[List[List[float]]] = None,
-    document_vector: Optional[List[float]] = None,
     page_ids: Optional[List[str]] = None,
 ) -> None:
     async with aiosqlite.connect(LOCAL_DB_PATH) as conn:
         await conn.execute("BEGIN")
         try:
             await _db_store_pdf_data(
-                conn, document_id, title, len(page_texts), topic, document_vector
+                conn, document_id, title, len(page_texts)
             )
             print(f"Storing {len(page_texts)} images and vectors")
             print(f"Vectors: {vectors}")
@@ -112,9 +102,6 @@ async def _db_remove_pdf_data(document_id: str) -> None:
             """, (document_id,))
             await conn.execute("""
                 DELETE FROM documents WHERE document_id = ?
-            """, (document_id,))
-            await conn.execute("""
-                DELETE FROM documents_vectors WHERE document_id = ?
             """, (document_id,))
             await conn.commit()
         except Exception as e:
