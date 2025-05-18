@@ -18,14 +18,14 @@ elif torch.cuda.is_available():
 else:
     DEVICE = "cpu"
     print("MPS and CUDA not available, using CPU")
-    
+
 
 model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     "Qwen/Qwen2.5-VL-3B-Instruct", torch_dtype="auto", device_map="auto"
 )
 processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-3B-Instruct")
 
-async def generate_answer (messages: list, images: list):
+async def generate_answer(messages: list, images: list):
     content = []
     for image_bytes in images:
         content.append({
