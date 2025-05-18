@@ -1,6 +1,5 @@
 from transformers import Qwen2_5_VLForConditionalGeneration, AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
-import asyncio
 import torch
 
 # Set up device
@@ -26,7 +25,15 @@ model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
 )
 processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-3B-Instruct")
 
-async def generate_answer (messages, images):
+async def generate_answer (messages: list, images: list):
+    content = []
+    for image_bytes in images:
+        content.append({
+            "type": "image", 
+            "image": f"data:image;base64,{image_bytes}"
+        })
+    messages.append({"role": "user", "content": content})
+    
     try:
         text = processor.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
@@ -48,26 +55,6 @@ async def generate_answer (messages, images):
         output_text = processor.batch_decode(
             generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
         )
-        print(output_text)
+        return(output_text)
     except Exception as e:
         print(f"Error: {e}")
-        
-        
-async def main():
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "image": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg",
-                },
-                {"type": "text", "text": "Describe this image."},
-            ],
-        }
-    ]
-
-    await generate_answer(messages, None)
-    
-if __name__ == "__main__":
-    asyncio.run(main())
