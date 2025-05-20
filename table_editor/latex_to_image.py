@@ -13,7 +13,7 @@ def save_latex_as_image(latex_str, outname="outputs/xxx"):
     ...
 # 加载 ArXiv 表格数据集（可以选 staghado/ArXiv-tables 或 neulab/latex-table）
 dataset = load_dataset("staghado/ArXiv-tables") 
-
+  
 # 看看每条数据有哪些字段
 print(dataset["train"].column_names)
 
