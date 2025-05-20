@@ -1,51 +1,64 @@
 import re
 #主要想实现对表格中数据的增删改
 
+__all__ = [
+    "modify_numeric_values",
+    "drop_table_column",
+    "drop_table_row",
+    "insert_row",
+    "insert_empty_row_auto",
+    "insert_column",
+    "update_tabular_column_format",
+    "clean_latex_string",
+    "get_table_col_count",
+    "finalize_latex_structure",
+]
+
+# 在对 original_latex 进行任何操作前，先清理字符串
+# 例如:
+# original_latex = clean_latex_string(original_latex)
+
+# 新增：清理 LaTeX 字符串中的非法控制字符
+def clean_latex_string(text):
+    """
+    清理 LaTeX 字符串中的非法控制字符（如 ASCII < 32，保留 \n 和 \t）
+    """
+    return ''.join(ch for ch in text if ord(ch) >= 32 or ch in '\n\t')
+
 #替换表格中的数值字符串
 def modify_numeric_values(latex_str, old_val, new_val):
     """
-    修改 LaTeX 表格中的某个数值
+    替换 LaTeX 表格中的某个数值
     """
     return latex_str.replace(old_val, new_val)
 
 #删除指定的列（第 col_index 列，从 0 开始）
-def drop_table_column(latex_str, col_index):
+def drop_table_column(latex_str, col_index=1):
     """
     删除表格中的第 col_index 列（从 0 开始计数）
     """
     new_lines = []
     for line in latex_str.split("\n"):
         if '&' in line:
-            parts = line.split('&')
-            # 加入越界判断
+            parts = [p.strip() for p in line.split('&')]
             if 0 <= col_index < len(parts):
                 parts.pop(col_index)
-            else:
-                print(f"当前行列数为 {len(parts)}，无法删除第 {col_index} 列。")
-                # 去掉多余空格
-            parts = [p.strip() for p in parts]
-            line = ' & '.join(parts)
+                line = ' & '.join(parts)
         new_lines.append(line)
-    updated = '\n'.join(new_lines)
-    col_count = get_table_col_count(updated)
-    if col_count is not None:
-        updated = update_tabular_column_format(updated, col_count)
-    return updated
+    return '\n'.join(new_lines)
 
 #删除第 row_index 行的数据（排除表头），用于行级内容裁剪
-def drop_table_row(latex_str, row_index):
+def drop_table_row(latex_str, row_index=0):
     """
-    删除第 row_index 行（从 0 开始计数，排除表头）
+    删除第 row_index 行（从 0 开始计数，不包括表头）
     """
     new_lines = []
     data_row_count = 0
-
     for line in latex_str.split("\n"):
         if '&' in line:
-            # 遇到数据行
             if data_row_count == row_index:
                 data_row_count += 1
-                continue  # 跳过该行
+                continue
             data_row_count += 1
         new_lines.append(line)
     return '\n'.join(new_lines)
@@ -57,7 +70,6 @@ def insert_row(latex_str, row_str, before="\\bottomrule"):
     """
     return latex_str.replace(before, row_str + "\n" + before)
 
-#根据 tabular 的列定义，自动构造一行空值（比如 & & & \\）并插入到 \bottomrule 前
 def insert_empty_row_auto(latex_str, before="\\bottomrule", default=""):
     """
     自动识别列数，插入一个空值行（如 '& & &'）。
@@ -70,10 +82,9 @@ def insert_empty_row_auto(latex_str, before="\\bottomrule", default=""):
     new_row = ' & '.join([default] * num_cols) + r' \\'
     return latex_str.replace(before, new_row + "\n" + before)
 
-#在每一行中插入一个新的列（给定默认值），并自动更新 tabular 的列格式定义
 def insert_column(latex_str, col_index=1, default_value=""):
     """
-    在每一行中插入一列，并尝试更新列格式
+    在每一行中插入一列
     """
     new_lines = []
     for line in latex_str.split("\n"):
@@ -82,69 +93,92 @@ def insert_column(latex_str, col_index=1, default_value=""):
             if 0 <= col_index <= len(parts):
                 parts.insert(col_index, default_value)
                 line = ' & '.join(parts)
-        new_lines.append(line) 
-    updated = '\n'.join(new_lines)
-    # 重新计算列数并更新 tabular 格式
-    col_count = get_table_col_count(updated)
-    if col_count is not None:
-        updated = update_tabular_column_format(updated, col_count)
-        print("插入列后 LaTeX：", repr(updated))
-    return updated
+        new_lines.append(line)
+    return '\n'.join(new_lines)
 
-#自动检测表格的列数 —— 统计第一行出现 & 的数量 + 1
+def update_tabular_column_format(latex_str, new_col_count):
+
+    col_def = '|'.join([f'p{{3cm}}' for _ in range(new_col_count)])
+    new_tabular = '\\begin{tabular}{|' + col_def + '|}'
+
+    # 清理非可见字符（比如 \x08）
+    new_tabular = ''.join(ch for ch in new_tabular if ch >= ' ' or ch in '\n\t')
+    
+    print("new_tabular:", repr(new_tabular))  # 确认是否被修复 调试是否出现非法字符
+
+    return re.sub(r'\\begin{tabular}{[^}]+}', new_tabular, latex_str, count=1)
+
+
 def get_table_col_count(latex_str):
     """
-    从表格中自动识别列数（只找第一行带 & 和 \\ 的行）
+    尝试自动计算表格的列数（基于第一行带有 & 的数据）
     """
     for line in latex_str.split("\n"):
         if '&' in line and '\\' in line:
             return line.count('&') + 1
     return None
-#根据当前列数自动插入一行填充了默认值的行，比如 NEW & NEW & NEW \\
-def insert_row_auto(latex_str, fill="NEW", before="\\bottomrule"):
-    """
-    自动判断列数，在 bottomrule 前插入一行填充数据
-    """
-    col_count = get_table_col_count(latex_str)
-    if col_count is None:
-        raise ValueError("无法自动识别表格列数，插入失败。")
 
-    row = " & ".join([fill] * col_count) + r" \\"
-    return latex_str.replace(before, row + "\n" + before)
-
-#根据新的列数，动态生成 \begin{tabular}{...} 的列宽结构
-def update_tabular_column_format(latex_str, new_col_count):
-    """
-    根据新的列数更新 tabular 的列格式，只替换列定义部分
-    """
-    import re
-    col_def = '|'.join([f'p{{3cm}}' for _ in range(new_col_count)])
-    new_format = f'\\begin{{tabular}}{{|{col_def}|}}'
-    print("正在替换 tabular 格式为：", repr(new_format))
-
-    updated = re.sub(r'\\begin{tabular}\{[^}]+\}', new_format, latex_str, count=1)
-    print("格式更新后：", repr(updated))
-    return updated
-
-#这是一个整理器，用于确保表格最终的列格式与你实际内容匹配（通常在保存前最后调用）
 def finalize_latex_structure(latex_str):
-    """
-    自动识别列数并更新 tabular 格式（供保存前使用）
-    """
+    if not latex_str.strip().startswith("\\begin{table}"):
+        latex_str = "\\begin{table}\n" + latex_str
     col_count = get_table_col_count(latex_str)
     if col_count is not None:
-        print("正在调用 finalize 结构更新")
-        return update_tabular_column_format(latex_str, col_count)
+        latex_str = update_tabular_column_format(latex_str, col_count)
+        latex_str = update_multicolumn_and_cline(latex_str, col_count)
     return latex_str
-__all__ = [
-    "modify_numeric_values",
-    "drop_table_column",
-    "drop_table_row",
-    "insert_row",
-    "insert_empty_row_auto",
-    "insert_column",
-    "get_table_col_count",
-    "insert_row_auto",
-    "update_tabular_column_format",
-    "finalize_latex_structure"
-]
+
+def update_multicolumn_and_cline(latex_str, new_col_count):
+    latex_str = re.sub(r'\\multicolumn{(\d+)}', fr'\\multicolumn{{{new_col_count}}}', latex_str)
+    latex_str = re.sub(r'\\cline{1-\d+}', fr'\\cline{{1-{new_col_count}}}', latex_str)
+    return latex_str
+
+
+
+'''
+测试功能
+if __name__ == "__main__":
+    def test_pipeline():
+        raw = r"""
+        \begin{table}[H]
+        \centering
+        \scriptsize
+        \begin{tabular}{|p{3cm}|p{3cm}|}
+        \hline
+        A & B \\
+        \hline
+        10 & 2 \\
+        \hline
+        \end{tabular}
+        \end{table}
+        """
+        from pprint import pprint
+
+        print("🔹 原始 LaTeX：")
+        pprint(raw)
+
+        # 清理
+        cleaned = clean_latex_string(raw)
+
+        # 替换值
+        modified = modify_numeric_values(cleaned, old_val="10", new_val="99")
+
+        # 插入列
+        modified = insert_column(modified, col_index=1, default_value="NEW")
+
+        # 删除列
+        modified = drop_table_column(modified, col_index=2)
+
+        # 插入行（自动）
+        modified = insert_empty_row_auto(modified, default="EMPTY")
+
+        # 删除第一数据行
+        modified = drop_table_row(modified, row_index=0)
+
+        # 最终更新结构
+        modified = finalize_latex_structure(modified)
+
+        print("\n 最终 LaTeX：")
+        pprint(modified)
+
+    test_pipeline()
+    '''
