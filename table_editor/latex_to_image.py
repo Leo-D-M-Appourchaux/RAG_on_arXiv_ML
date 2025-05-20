@@ -62,4 +62,4 @@ if __name__ == "__main__":
         dataset = load_dataset("staghado/ArXiv-tables")
         latex_str = dataset["train"][0]["latex_content"]
         save_latex_as_image(latex_str, outname="outputs/real_table_0")
-        print("图像生成完毕")
+        print("图像生成完毕")  

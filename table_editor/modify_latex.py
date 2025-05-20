@@ -81,7 +81,7 @@ def insert_column(latex_str, col_index=1, default_value=""):
     col_count = get_table_col_count(updated)
     if col_count is not None:
         updated = update_tabular_column_format(updated, col_count)
-        print("✅ 插入列后 LaTeX：", repr(updated))
+        print("插入列后 LaTeX：", repr(updated))
     return updated
 
 def get_table_col_count(latex_str):
@@ -113,10 +113,10 @@ def update_tabular_column_format(latex_str, new_col_count):
     import re
     col_def = '|'.join([f'p{{3cm}}' for _ in range(new_col_count)])
     new_format = f'\\begin{{tabular}}{{|{col_def}|}}'
-    print("✅ 正在替换 tabular 格式为：", repr(new_format))
+    print("正在替换 tabular 格式为：", repr(new_format))
 
     updated = re.sub(r'\\begin{tabular}\{[^}]+\}', new_format, latex_str, count=1)
-    print("💡 格式更新后：", repr(updated))
+    print("格式更新后：", repr(updated))
     return updated
 
 def finalize_latex_structure(latex_str):
@@ -125,7 +125,7 @@ def finalize_latex_structure(latex_str):
     """
     col_count = get_table_col_count(latex_str)
     if col_count is not None:
-        print("🧩 正在调用 finalize 结构更新")
+        print("正在调用 finalize 结构更新")
         return update_tabular_column_format(latex_str, col_count)
     return latex_str
 __all__ = [
