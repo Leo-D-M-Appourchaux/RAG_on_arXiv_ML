@@ -90,11 +90,12 @@ def insert_column(latex_str, col_index=1, default_value=""):
     for line in latex_str.split("\n"):
         if '&' in line:
             parts = [p.strip() for p in line.split('&')]
-            if 0 <= col_index <= len(parts):
+            if 0 <= col_index <= len(parts): 
                 parts.insert(col_index, default_value)
                 line = ' & '.join(parts)
         new_lines.append(line)
     return '\n'.join(new_lines)
+
 
 def update_tabular_column_format(latex_str, new_col_count):
 
