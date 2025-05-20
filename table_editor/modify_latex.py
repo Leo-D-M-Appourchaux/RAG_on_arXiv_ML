@@ -25,6 +25,7 @@ def clean_latex_string(text):
     """
     return ''.join(ch for ch in text if ord(ch) >= 32 or ch in '\n\t')
 
+
 #替换表格中的数值字符串
 def modify_numeric_values(latex_str, old_val, new_val):
     """

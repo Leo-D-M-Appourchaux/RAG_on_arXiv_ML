@@ -13,7 +13,6 @@ for ext in ["aux", "log", "fls", "pdf"]:
     for f in glob.glob(f"outputs/*.%s" % ext):
         os.remove(f)
 
-
 def save_latex_as_image(latex_str, outname="outputs/output"):  
     """
     将 LaTeX 表格代码编译为 PNG 图像。
