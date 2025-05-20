@@ -1,11 +1,14 @@
 import re
 #主要想实现对表格中数据的增删改
+
+#替换表格中的数值字符串
 def modify_numeric_values(latex_str, old_val, new_val):
     """
     修改 LaTeX 表格中的某个数值
     """
     return latex_str.replace(old_val, new_val)
 
+#删除指定的列（第 col_index 列，从 0 开始）
 def drop_table_column(latex_str, col_index):
     """
     删除表格中的第 col_index 列（从 0 开始计数）
@@ -29,6 +32,7 @@ def drop_table_column(latex_str, col_index):
         updated = update_tabular_column_format(updated, col_count)
     return updated
 
+#删除第 row_index 行的数据（排除表头），用于行级内容裁剪
 def drop_table_row(latex_str, row_index):
     """
     删除第 row_index 行（从 0 开始计数，排除表头）
@@ -46,12 +50,14 @@ def drop_table_row(latex_str, row_index):
         new_lines.append(line)
     return '\n'.join(new_lines)
 
+#手动插入一行，通常在 \bottomrule 或指定位置前插入
 def insert_row(latex_str, row_str, before="\\bottomrule"):
     """
     插入指定内容的一行（如 'X & Y & Z \\'），默认在 \\bottomrule 前。
     """
     return latex_str.replace(before, row_str + "\n" + before)
 
+#根据 tabular 的列定义，自动构造一行空值（比如 & & & \\）并插入到 \bottomrule 前
 def insert_empty_row_auto(latex_str, before="\\bottomrule", default=""):
     """
     自动识别列数，插入一个空值行（如 '& & &'）。
@@ -64,6 +70,7 @@ def insert_empty_row_auto(latex_str, before="\\bottomrule", default=""):
     new_row = ' & '.join([default] * num_cols) + r' \\'
     return latex_str.replace(before, new_row + "\n" + before)
 
+#在每一行中插入一个新的列（给定默认值），并自动更新 tabular 的列格式定义
 def insert_column(latex_str, col_index=1, default_value=""):
     """
     在每一行中插入一列，并尝试更新列格式
@@ -84,6 +91,7 @@ def insert_column(latex_str, col_index=1, default_value=""):
         print("插入列后 LaTeX：", repr(updated))
     return updated
 
+#自动检测表格的列数 —— 统计第一行出现 & 的数量 + 1
 def get_table_col_count(latex_str):
     """
     从表格中自动识别列数（只找第一行带 & 和 \\ 的行）
@@ -92,7 +100,7 @@ def get_table_col_count(latex_str):
         if '&' in line and '\\' in line:
             return line.count('&') + 1
     return None
-
+#根据当前列数自动插入一行填充了默认值的行，比如 NEW & NEW & NEW \\
 def insert_row_auto(latex_str, fill="NEW", before="\\bottomrule"):
     """
     自动判断列数，在 bottomrule 前插入一行填充数据
@@ -104,8 +112,7 @@ def insert_row_auto(latex_str, fill="NEW", before="\\bottomrule"):
     row = " & ".join([fill] * col_count) + r" \\"
     return latex_str.replace(before, row + "\n" + before)
 
-import re
-
+#根据新的列数，动态生成 \begin{tabular}{...} 的列宽结构
 def update_tabular_column_format(latex_str, new_col_count):
     """
     根据新的列数更新 tabular 的列格式，只替换列定义部分
@@ -119,6 +126,7 @@ def update_tabular_column_format(latex_str, new_col_count):
     print("格式更新后：", repr(updated))
     return updated
 
+#这是一个整理器，用于确保表格最终的列格式与你实际内容匹配（通常在保存前最后调用）
 def finalize_latex_structure(latex_str):
     """
     自动识别列数并更新 tabular 格式（供保存前使用）
