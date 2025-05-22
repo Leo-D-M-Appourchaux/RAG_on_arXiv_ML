@@ -23,6 +23,8 @@ def save_latex_as_image(latex_str, outname="outputs/output"):
     # 创建输出目录
     os.makedirs("outputs", exist_ok=True)
 
+    print("开始渲染：", outname)
+
     # 创建 LaTeX 文档对象
     doc = Document()
     doc.packages.append(NoEscape(r'\usepackage{float}'))   # 支持 [H]
@@ -50,11 +52,19 @@ def save_latex_as_image(latex_str, outname="outputs/output"):
 
     # 生成 PDF 文件
     doc.generate_pdf(outname, clean_tex=True)
+    print("PDF 是否生成：", os.path.exists(f"{outname}.pdf"))
 
     # 将 PDF 转为 PNG 图像
-    images = convert_from_path(f"{outname}.pdf", poppler_path="/opt/local/bin")
+    import shutil
+    poppler_path = shutil.which("pdftoppm")
+    images = convert_from_path(
+        f"{outname}.pdf",
+        poppler_path=os.path.dirname(poppler_path) if poppler_path else None
+    )
+    print("是否获取到图像列表：", bool(images))
+    print("图像数量：", len(images) if images else 0)
     images[0].save(f"{outname}.png", "PNG")
-    print(f"图像保存成功：{outname}.png")
+    print("PNG 是否生成：", os.path.exists(f"{outname}.png"))
 
 def batch_render_tables(dataset, start=0, end=10):
     # 要批量处理 N 条数据
@@ -65,10 +75,10 @@ def batch_render_tables(dataset, start=0, end=10):
             try:
                 save_latex_as_image(latex_str, outname=f"outputs/real_table_{i}")
             except Exception as e:
-                print(f"❌ 第 {i} 条渲染失败：{e}")
+                print(f"第 {i} 条渲染失败：{e}")
                 with open(f"outputs/real_table_{i}_error.tex", "w") as f:
                     f.write(latex_str)
-                print(f"⚠️ 已保存失败的 LaTeX 源码为 outputs/real_table_{i}_error.tex")
+                print(f"已保存失败的 LaTeX 源码为 outputs/real_table_{i}_error.tex")
         else:
             print(f"第 {i} 条表格结构不完整（缺少 table 或 tabular 结构），跳过")
 
