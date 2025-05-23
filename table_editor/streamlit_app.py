@@ -5,9 +5,13 @@ from modify_latex import modify_numeric_values
 from modify_latex import check_text
 import tempfile
 import os
+from collections import Counter
 import glob
 from PIL import Image
 from modify_latex import add_column_to_outermost_tabular
+import pandas as pd
+import re
+import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="ArXiv Table Modifier", layout="centered")
 st.title("ArXiv Table Interactive Modifier")
@@ -18,6 +22,28 @@ def load_data():
     return load_dataset("staghado/ArXiv-tables")["train"]
 
 dataset = load_data()
+
+latex1 = dataset[0]
+latex2 = dataset[0]["latex_content"]
+st.subheader("preliminary analysis")
+button = st.button("preliminary analysis")
+
+if button:
+    st.text("the attribute of the table is:")
+    st.text(check_text(latex1))
+    st.text("the length of the table is:")
+    st.text(len(latex2))
+    lengths = [len(str(x["latex_content"])) for x in dataset]
+    df = pd.DataFrame({"length": lengths})
+    df["length"].plot.hist(bins=30, title="Length Distribution of LaTeX content")
+    st.pyplot(plt.gcf())
+    vocab = Counter()
+    for entry in dataset.select(range(500)):  # 采样 500 个表
+        words = re.findall(r'\\?[a-zA-Z_]+', entry["latex_content"])
+        vocab.update(words)
+    st.text("the rough length of the vocabulary is:")
+    #st.text(vocab)
+    st.text(len(vocab))
 
 # === 表格选择 ===
 default_index = st.session_state.get("table_index", 0)
@@ -68,7 +94,7 @@ with st.form(key="modify_form"):
         changes.append((old_val, new_val))
     submitted = st.form_submit_button("生成修改图像")
     submitted2 = st.form_submit_button("add a new column")
-    submitted3 = st.form_submit_button("preliminary analysis")
+    #submitted3 = st.form_submit_button("preliminary analysis")
 
 # === 渲染修改后的图像 ===
 if submitted:
@@ -102,9 +128,8 @@ if submitted2:
             st.error(f"添加新列后渲染失败：{e}")
 
 
-if submitted3:
-    st.text("正在进行初步分析...")
-    st.text(check_text(latex))
+
+
 # === 上一个/下一个表格按钮 ===
 col1, col2 = st.columns(2)
 with col1:
