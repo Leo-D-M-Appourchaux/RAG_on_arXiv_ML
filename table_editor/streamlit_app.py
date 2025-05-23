@@ -2,10 +2,12 @@ import streamlit as st
 from datasets import load_dataset
 from latex_to_image import save_latex_as_image
 from modify_latex import modify_numeric_values
+from modify_latex import check_text
 import tempfile
 import os
 import glob
 from PIL import Image
+from modify_latex import add_column_to_outermost_tabular
 
 st.set_page_config(page_title="ArXiv Table Modifier", layout="centered")
 st.title("ArXiv Table Interactive Modifier")
@@ -62,6 +64,8 @@ with st.form(key="modify_form"):
             new_val = st.text_input(f"新值 #{i+1}", key=f"new_{i}")
         changes.append((old_val, new_val))
     submitted = st.form_submit_button("生成修改图像")
+    submitted2 = st.form_submit_button("add a new column")
+    submitted3 = st.form_submit_button("preliminary analysis")
 
 # === 渲染修改后的图像 ===
 if submitted:
@@ -79,6 +83,23 @@ if submitted:
     except Exception as e:
         st.error(f"修改后渲染失败：{e}")
 
+if submitted2:
+    # 添加新列
+        modified_latex = add_column_to_outermost_tabular(latex)
+        mod_outname_base = f"outputs/table_{table_index}_modified_with_new_column"
+        try:
+            save_latex_as_image(modified_latex, outname=mod_outname_base)
+            mod_path = f"{mod_outname_base}.png"
+            st.subheader("添加新列后的图像")
+            with open(mod_path, "rb") as img_file:
+                st.image(img_file.read(), caption="添加新列后的表格渲染结果")
+        except Exception as e:
+            st.error(f"添加新列后渲染失败：{e}")
+
+
+if submitted3:
+    st.text("正在进行初步分析...")
+    st.text(check_text(latex))
 # === 上一个/下一个表格按钮 ===
 col1, col2 = st.columns(2)
 with col1:

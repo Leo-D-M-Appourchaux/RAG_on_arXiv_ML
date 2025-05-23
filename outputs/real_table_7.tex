@@ -1,0 +1,130 @@
+\documentclass{article}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{float}%
+\usepackage{booktabs}%
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{makecell}%
+\usepackage{cite}%
+\usepackage{threeparttable}%
+\usepackage{xcolor}%
+\usepackage{amssymb}%
+\usepackage{hyperref}%
+\usepackage{textcomp}%
+%
+\newcommand{\specialcell}[2][c]{\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}%
+%
+\begin{document}%
+\normalsize%
+\begin{table}
+\begin{threeparttable}[tb]
+\centering
+\tabcolsep=0.04cm
+\caption{The chronology of the recent approaches which modifies the training algorithm to account for quantization error.} 
+\label{quanttable}
+\begin{scriptsize}
+%\begin{sc}
+\begin{tabular}{c|c|c|ccc|cc}  
+\noalign{
+\hrule height 2pt
+}
+\multirow{2}{*}{Year} &\multirow{2}{*}{Approach} & \multirow{2}{*}{Keywords} & \multicolumn{3}{c}{Quantization\tnote{1}} &  \multicolumn{2}{c}{Benchmark} 
+\\ \cline{4-6} \cline{7-8}
+& & & Forward & Backward & \specialcell{Parameter\\ Update} & Data & Model \\ 
+\noalign{
+\hrule height 2pt
+}
+2014 &  EBP \cite{soudry2014expectation} & Expectation Back Propagation & 1 bit, FP & - & - & used in \cite{crammer2013adaptive}  & Proprietary MLP \\ 
+\noalign{
+\hrule height 2pt
+}
+\multirow{4}{*} {2015} & \multirow{3}{*} {Gupta et. al \cite{gupta2015deep} } & \multirow{2}{*} {Stochastic Rounding} & 16 bits & 16 bits  & 16 bits & MNIST & Proprietary MLP , LeNet-5 \\ \cline{4-8}
+& & & 20 bits & 20 bits & 20 bits & CIFAR-10& used in \cite{hinton2012improving}\\  \cline{2-8}
+ & Binary Connect \cite{courbariaux2015binaryconnect} & Stochastic Binarization & 1 bit & 1 bit & Float 32 \tnote{2}  & \specialcell{MNIST \\ CIFAR-10\\SVHN} & Proprietary MLP, CNN \\ \noalign{
+\hrule height 2pt
+}
+\multirow{5}{*}{2016} & Lin et. al \cite{lin2015neural} & \specialcell{Stochastic Binarization \\No forward pass multiplication\\
+Quantized back propagation}  & 1 bit & 1 bit & Float 32 & \specialcell{MNIST \\ CIFAR-10\\SVHN} & \specialcell{Proprietary \\ MLP, CNN} \\ \cline{2-8}
+& Bitwise Net \cite{kim2016bitwise} & \specialcell{Weight Compression\\
+Noisy back propagation}  & 1 bit & 1 bit & \specialcell{1 bit \\ Float 32\tnote{3}} & MNIST & Proprietary MLP\\ \cline{2-8}
+& XNOR-Net \cite{rastegari2016xnor} & \specialcell{Binary convolution\\Binary dot-product\\
+Scaling binary gradient}  & 1 bit & 1 bit & \specialcell{1 bit \\ Float 32\tnote{4}} & ImageNet & \specialcell{AlexNet \\ ResNet-18 \\ GoogLenet} 
+\\ \cline{2-8}
+& \multirow{2}{*}{DoReFa-Net \cite{zhou2016dorefa}} & \multirow{2}{*}{\specialcell{stochastic gradient quantization \\ arbitrary bit-width}} &\multirow{2}{*}{1-8 bit} & \multirow{2}{*}{1-8 bit} & \multirow{2}{*}{2-32 bit} & SVHN & proprietary CNN \\ \cline{7-8}
+&& & & && ImageNet & AlexNet
+
+\\ \noalign{
+\hrule height 2pt
+}
+\multirow{4}{*}{2017} & \multirow{4}{*}{QNN \cite{hubara2017quantized}} & \multirow{4}{*}{\specialcell{Deterministic binarization \\ Straight through estimators \\ to avoid saturation \\ Shift based Batch Normalization \\ Shift based AdaMAX}}  & \multirow{3}{*}{1 bit}& \multirow{3}{*}{1 bit} & \multirow{3}{*}{1 bit \tnote{5}} &  & \\
+& & & & & & MNIST & proprietary MLP \\ \cline{7-8}
+& & & & & & \specialcell{CiFAR-10\\SVHN} & CNN from \cite{courbariaux2015binaryconnect} \\ \cline{7-8}
+& & & & & & \specialcell{ImageNet} & \specialcell{AlexNet\\GoogLenet} \\ \cline{4-8}
+ & & & 4 bit & 4 bit & 4 bit \tnote{6} & \specialcell{Penn \\ Treebank} & \specialcell{proprietary RNN\\LSTM}  \\
+\noalign{
+\hrule height 2pt
+}
+\multirow{6}{*}{2018} & \multirow{3}{*}{Wang et. al \cite{wang2018training} } & \multirow{3}{*}{\specialcell{novel floating point\\ chunk based accumulation \\ stochastic rounding}}  & \multirow{3}{*}{8 bit}  & \multirow{3}{*}{8 bit} & \multirow{3}{*}{8 bit \tnote{7}} & CIFAR-10 & \specialcell{proprietary CNN\\ResNET}
+\\\cline{7-8}
+&& & & && BN50 \cite{van2017training}& proprietary MLP 
+\\ \cline{7-8}
+&&&&&& ImageNet & \specialcell{AlexNet\\ResNET18\\ResNET50}
+\\ \cline{2-8}
+& \multirow{3}{*}{Jacob et. al \cite{jacob2018quantization}} & \multirow{3}{*}{\specialcell{training with simulated\\quantization}}& \multirow{3}{*}{8 bit} & \multirow{3}{*}{8 bit} & \multirow{3}{*}{8 bit \tnote{8}} & Imagenet &  \specialcell{Resnet\\Inception v3\\MobileNet}  \\ \cline{7-8}
+&& & & && COCO & MobileNet SSD  
+\\ \cline{7-8}
+&& & & && Flickr \cite{howard2017mobilenets} & MobileNet SSD 
+
+\\ 
+\noalign{
+\hrule height 2pt
+}
+2019
+& WAGEUBN \cite{yang2020training} & \specialcell{batch-norm layer quantization \\8-bit integer representation \\combination of direct, constant \\and shift quantization} &8 bit & 8 bit & 8 bit & ImageNet & ResNet18/34/50 \\
+\noalign{
+\hrule height 2pt
+}
+\multirow{12}{*}{2020}
+&\multirow{4}{*}{S2FP8 \cite{cambier2020shifted}} & \multirow{4}{*}{\specialcell{shifted and squeezed FP8 \\ representation of tensors \\ tensor distribution learning }} &\multirow{4}{*}{8 bit} & \multirow{4}{*}{8 bit} & \multirow{4}{*}{32 bit} & CIFAR-10 & ResNet20/34/50 
+\\ \cline{7-8}
+&& & & && ImageNet & ResNet18/50
+\\ \cline{7-8}
+&& & & && English-Vietnamese & Transformer-Tiny
+\\ \cline{7-8}
+&& & & && MovieLens & \specialcell{Neural Collaborative\\ Filtering (NCF)}
+\\ \cline{2-8}
+& \multirow{3}{*}{Wiedemann et. al \cite{wiedemann2020dithered}} &
+\multirow{3}{*}{\specialcell{stochastic gradient quantization \\ induce sparsity \\ non-subtractive dither}} &\multirow{3}{*}{8 bit} & \multirow{3}{*}{8 bit} & \multirow{3}{*}{32 bit} & MNIST & LeNet
+\\ \cline{7-8}
+&& & & && CIFAR-10/100 & \specialcell{AlexNet\\ResNet18\\VGG11}
+\\ \cline{7-8}
+&& & & && ImageNet &ResNet18
+\\ \cline{2-8}
+& \multirow{3}{*}{Quant-Noise \cite{fan2020training} }& \multirow{3}{*}{\specialcell{training using\\quantization noise}} & \multirow{3}{*}{8 bit} & \multirow{3}{*}{8 bit} & \multirow{3}{*}{8 bit} & Wikitext-103 & RoBERT \\ 
+&& & & && MNLI & RoBERT\\
+&& & & && ImageNet & EfficientNet-B3\\
+\\ \noalign{
+\hrule height 2pt
+}
+\end{tabular}
+%\end{sc}
+
+\begin{tablenotes}
+ \item[1] minimum quantization for best performing model reported.
+ \item[2] all real valued vectors are reported as Float 32 by default.
+ \item[3] involves tuning a separate set of parameters with floating point precision.
+ \item[4] becomes Float 32 if gradient scaling is used.
+ \item[5] except the first layer input of 8 bits.
+ \item[6] contains results with 2 bit, 3 bit and floating point precision.
+ \item[7] additional 16 bit for accumulation.
+ \item[8] uses 7 bit precision for some Inception v3 experiments.
+\end{tablenotes}
+%\normalsize
+\end{scriptsize}
+\end{threeparttable}
+\end{table}%
+\end{document}

@@ -1,0 +1,38 @@
+\documentclass{article}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{float}%
+\usepackage{booktabs}%
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{makecell}%
+\usepackage{cite}%
+\usepackage{threeparttable}%
+\usepackage{xcolor}%
+\usepackage{amssymb}%
+\usepackage{hyperref}%
+\usepackage{textcomp}%
+%
+\newcommand{\specialcell}[2][c]{\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}%
+%
+\begin{document}%
+\normalsize%
+\begin{table}[H]
+    \centering
+    \scriptsize
+    \begin{tabular}{|p{3cm}|p{2cm}|p{2cm}|p{2cm}|p{2cm}|}
+      \hline
+      \hline
+      \multicolumn{5}{c}{Details of Experiments for the Variable Threshold Algorithm}\\
+      \cline{1-5}
+      \emph{Statistic} & \emph{Average} & \emph{Minimum} & \emph{Maximum} & \emph{Standard Deviation}\\
+      \hline
+      Predictive Accuracy of Random Forest & {\vspace{0mm}$85\%$} & {\vspace{0mm}$81\%$} & {\vspace{0mm}$90\%$} & {\vspace{0mm}$3.24\%$}\\\hline
+      Convergence Time of Optimization Algorithm & {\vspace{0mm}$10$} & {\vspace{0mm}$7$} & {\vspace{0mm}$12$} & {\vspace{0mm}$2.2$}\\\hline
+    \end{tabular}
+    \caption{\small We present here some relevant statistics related to our experiments in parameter optimization. Notice that in the predictive accuracy criterion, larger values are preferable. By contrast, we have that convergence time is better for smaller values. We define as convergence time the number of iterations of the algorithm that are required to map out completely the known behavior of the accuracy function.}
+  \end{table}%
+\end{document}

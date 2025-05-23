@@ -1,0 +1,71 @@
+\documentclass{article}%
+\usepackage[T1]{fontenc}%
+\usepackage[utf8]{inputenc}%
+\usepackage{lmodern}%
+\usepackage{textcomp}%
+\usepackage{lastpage}%
+\usepackage{float}%
+\usepackage{booktabs}%
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{makecell}%
+\usepackage{cite}%
+\usepackage{threeparttable}%
+\usepackage{xcolor}%
+\usepackage{amssymb}%
+\usepackage{hyperref}%
+\usepackage{textcomp}%
+%
+\newcommand{\specialcell}[2][c]{\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}%
+%
+\begin{document}%
+\normalsize%
+\begin{table}[htbp]
+\caption{Comparison of popular CNNs.}
+\centering
+\scriptsize
+\begin{tabular}{ m{2.4cm}<{\centering}|m{1.4cm}<{\centering}| m{1.4cm}<{\centering}| m{1.4cm}<{\centering}|m{1.4cm}<{\centering}|m{1.4cm}<{\centering}|m{1.4cm}<{\centering}}
+\toprule
+Metric & \makecell{ AlexNet \\ \cite{krizhevsky2012imagenet} } & \makecell{ VGG-16 \\ \cite{simonyan2014very}} & \makecell{ GoogLeNet \\ \cite{szegedy2015going} }& \makecell{ ResNet-18 \\ \cite{he2016deep}} & \makecell{ ResNet-50 \\ \cite{he2016deep}} & \makecell{ Inception\\ v3 \cite{szegedy2016rethinking} }\\
+\noalign{
+\hrule height 2pt
+}
+Top-1 acc. &57.2 &71.5 &69.8 &69.6 &76.0 &76.9 \\
+\hline
+Top-5 acc. &80.2 &91.3 &90.0 &89.2 &93.0 &93.7 \\
+\hline
+Input size &227$\times$227 &224$\times$224 & 224$\times$224&224$\times$224 &224$\times$224&299$\times$299 \\
+\noalign{
+\hrule height 2pt
+}
+$\#$ of stacked CONV layers &5 &13 & 21&17 &49 &16 \\
+\hline
+Weights &2.3M &14.7M &6.0M & 9.5M&23.6M &22M \\
+\hline
+Activations &0.94M &15.23M &6.8M &3.2M &11.5M &10.6M \\
+\hline
+MACs &666M &15.3G &1.43G &1.8G &3.9G & 3.8G\\
+\noalign{
+\hrule height 2pt
+}
+$\#$ of FC layers &3 & 3&1 &1 & 1&1 \\
+\hline
+Weights &58.7M &125M &1M &0.5M &2M & 2M\\
+\hline
+Activations &9K &9K &2K &1.5K &3K &3K \\
+\hline
+MACs &58.7M &125M&1M &0.5M &2M &2M \\
+\noalign{
+\hrule height 2pt
+}
+Total weights &61M &138M & 7M& 10M&25.6M &24M \\
+\hline
+Total activations &0.95M &15.24M &6.8M &3.2M &11.5M &10.6M \\
+\hline
+Total MACs &724M &15.5G &1.43G &1.8G &3.9G &3.8G \\
+\bottomrule
+\end{tabular}
+\normalsize
+\label{table:bigCNNcompare}
+\end{table}%
+\end{document}

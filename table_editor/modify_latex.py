@@ -96,6 +96,68 @@ def insert_column(latex_str, col_index=1, default_value=""):
         new_lines.append(line)
     return '\n'.join(new_lines)
 
+def modify_column_spec(latex_line, addition="p{3cm}|"):
+    brace_count = 0
+    first_done = False
+    start_idx = None
+    end_idx = None
+
+    for i, char in enumerate(latex_line):
+        if char == '{':
+            brace_count += 1
+            if brace_count == 1 and not first_done:
+                first_done = True
+            elif brace_count == 1 and first_done and start_idx is None:
+                start_idx = i + 1  # content starts after this
+        elif char == '}':
+            if brace_count == 1 and start_idx is not None and end_idx is None:
+                end_idx = i  # content ends before this
+                break
+            brace_count -= 1
+
+    if start_idx is not None and end_idx is not None:
+        # Get original column spec
+        colspec = latex_line[start_idx:end_idx]
+        new_colspec = colspec + addition
+        return latex_line[:start_idx] + new_colspec + latex_line[end_idx:]
+    else:
+        return latex_line  # unchanged if not found
+
+
+def add_column_to_outermost_tabular(latex_str):
+    lines = latex_str.splitlines()
+    new_lines = []
+    nest = 0
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Start of a tabular block
+        if r'\begin{tabular}' in stripped:
+            
+            nest += 1
+            if nest == 1:
+                # Add an extra column (e.g., 'l' alignment)
+                #line = re.sub(r'{([^}]*)}', lambda m: '{' + m.group(1) + 'p{3cm}|'}', line, count=1)
+                #if nest == 1:
+                # Modify column spec: add one column before the closing }
+                line = modify_column_spec(line, addition="p{3cm}|")
+
+        # End of tabular block
+        elif r'\end{tabular}' in stripped:
+            if nest == 1:
+                pass  # could mark end for outermost if needed
+            nest -= 1
+
+        # Modify rows in outermost tabular only
+        if nest == 1 and '&' in line and r'\\' in line:
+            parts = line.split('&')
+            parts.insert(-1, ' NEW ')  # insert before last cell
+            line = ' & '.join(parts)
+
+        new_lines.append(line)
+
+    return '\n'.join(new_lines)
 
 def update_tabular_column_format(latex_str, new_col_count):
 
@@ -133,7 +195,9 @@ def update_multicolumn_and_cline(latex_str, new_col_count):
     latex_str = re.sub(r'\\cline{1-\d+}', fr'\\cline{{1-{new_col_count}}}', latex_str)
     return latex_str
 
-
+def check_text(latex_str):
+    print(latex_str.keys())
+    return latex_str.keys()
 
 '''
 测试功能
