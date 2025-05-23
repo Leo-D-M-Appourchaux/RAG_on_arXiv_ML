@@ -124,36 +124,43 @@ def modify_column_spec(latex_line, addition="p{3cm}|"):
         return latex_line  # unchanged if not found
 
 
-def add_column_to_outermost_tabular(latex_str):
+def add_column_to_outermost_tabular(latex_str, new_cell_value=" NEW "):
     lines = latex_str.splitlines()
     new_lines = []
     nest = 0
+    inside_outer_tabular = False
 
     for line in lines:
         stripped = line.strip()
 
-        # Start of a tabular block
-        if r'\begin{tabular}' in stripped:
-            
+        match = re.match(r'(\\begin\{tabular\})\{([^}]*)\}', stripped)
+        if match:
             nest += 1
             if nest == 1:
-                # Add an extra column (e.g., 'l' alignment)
-                #line = re.sub(r'{([^}]*)}', lambda m: '{' + m.group(1) + 'p{3cm}|'}', line, count=1)
-                #if nest == 1:
-                # Modify column spec: add one column before the closing }
+                inside_outer_tabular = True
+                original_start, colspec = match.groups()
                 line = modify_column_spec(line, addition="p{3cm}|")
 
-        # End of tabular block
         elif r'\end{tabular}' in stripped:
             if nest == 1:
-                pass  # could mark end for outermost if needed
+                inside_outer_tabular = False
             nest -= 1
+       
 
-        # Modify rows in outermost tabular only
-        if nest == 1 and '&' in line and r'\\' in line:
-            parts = line.split('&')
-            parts.insert(-1, ' NEW ')  # insert before last cell
-            line = ' & '.join(parts)
+        # Modify only inside the outermost tabular
+        if inside_outer_tabular:
+            # Patch multicolumn if found
+            if r'\multicolumn{' in line:
+                line = re.sub(r'\\multicolumn\{(\d+)\}', lambda m: f'\\multicolumn{{{int(m.group(1)) + 1}}}', line)
+            
+            if r'\cline{' in line:
+                line = re.sub(r'\\cline\{(\d+)-(\d+)\}', lambda m: fr'\cline{{{m.group(1)}-{int(m.group(2))+1}}}', line)
+
+            # Add a new cell to data rows
+            if '&' in line and r'\\' in line:
+                parts = line.split('&')
+                parts.insert(-1, new_cell_value)
+                line = ' & '.join(parts)
 
         new_lines.append(line)
 

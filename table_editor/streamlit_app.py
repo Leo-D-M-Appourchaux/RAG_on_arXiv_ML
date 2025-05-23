@@ -39,8 +39,11 @@ try:
     st.text(f"文件是否存在：{os.path.exists(orig_path)}")
     files = glob.glob("outputs/*.png")
     st.text(f"渲染图像如下")
-    with open(orig_path, "rb") as img_file:
-        st.image(img_file.read(), caption="原始表格")
+    # Get centered columns
+    left, center, right = st.columns([1, 200, 1])  # Adjust ratio if needed
+    with center:
+        with open(orig_path, "rb") as img_file:
+            st.image(img_file.read(), caption="原始表格")
 except Exception as e:
     st.warning("此表格可能含有不支持的 LaTeX 结构，已跳过渲染。")
     st.code(str(e), language="bash")
@@ -91,8 +94,10 @@ if submitted2:
             save_latex_as_image(modified_latex, outname=mod_outname_base)
             mod_path = f"{mod_outname_base}.png"
             st.subheader("添加新列后的图像")
-            with open(mod_path, "rb") as img_file:
-                st.image(img_file.read(), caption="添加新列后的表格渲染结果")
+            left, center, right = st.columns([200,1, 1])  # Adjust ratio if needed
+            with left:
+                with open(mod_path, "rb") as img_file:
+                    st.image(img_file.read(), caption="添加新列后的表格渲染结果")
         except Exception as e:
             st.error(f"添加新列后渲染失败：{e}")
 
