@@ -124,7 +124,7 @@ def modify_column_spec(latex_line, addition="p{3cm}|"):
         return latex_line  # unchanged if not found
 
 
-def add_column_to_outermost_tabular(latex_str, new_cell_value=" NEW "):
+def add_column_to_outermost_tabular(latex_str, new_cell_value=" NEW ",default_number=0):
     lines = latex_str.splitlines()
     new_lines = []
     nest = 0
@@ -159,7 +159,8 @@ def add_column_to_outermost_tabular(latex_str, new_cell_value=" NEW "):
             # Add a new cell to data rows
             if '&' in line and r'\\' in line:
                 parts = line.split('&')
-                parts.insert(-1, new_cell_value)
+                parts.insert(-1, new_cell_value+str(default_number))
+                default_number += 1
                 line = ' & '.join(parts)
 
         new_lines.append(line)

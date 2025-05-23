@@ -50,6 +50,9 @@ default_index = st.session_state.get("table_index", 0)
 table_index = st.number_input("选择表格编号", min_value=0, max_value=len(dataset)-1, step=1, value=default_index)
 latex = dataset[table_index]["latex_content"]
 
+if "working_latex" not in st.session_state or st.session_state.get("table_index", 0) != table_index:
+    st.session_state["working_latex"] = latex
+
 if "\\begin{tabular}" not in latex:
     st.warning("这个表格不包含 tabular 环节，请选别的编号。")
     st.stop()
@@ -98,13 +101,15 @@ with st.form(key="modify_form"):
 
 # === 渲染修改后的图像 ===
 if submitted:
-    modified_latex = latex
+    #modified_latex = latex
+    modified_latex = st.session_state["working_latex"]
     for old, new in changes:
         if old and new:
             modified_latex = modify_numeric_values(modified_latex, old, new)
     mod_outname_base = f"outputs/table_{table_index}_modified"
     try:
         save_latex_as_image(modified_latex, outname=mod_outname_base)
+        st.session_state["working_latex"] = modified_latex
         mod_path = f"{mod_outname_base}.png"
         st.subheader("修改后图像")
         with open(mod_path, "rb") as img_file:
@@ -114,7 +119,9 @@ if submitted:
 
 if submitted2:
     # 添加新列
-        modified_latex = add_column_to_outermost_tabular(latex)
+        #modified_latex = add_column_to_outermost_tabular(latex)
+        st.session_state["working_latex"] = add_column_to_outermost_tabular(st.session_state["working_latex"])
+        modified_latex = st.session_state["working_latex"]
         mod_outname_base = f"outputs/table_{table_index}_modified_with_new_column"
         try:
             save_latex_as_image(modified_latex, outname=mod_outname_base)
