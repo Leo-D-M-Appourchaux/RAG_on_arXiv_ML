@@ -23,15 +23,15 @@
 \begin{table}[t]
 \centering
 \resizebox{\columnwidth}{!}{
-\begin{tabular}{c|c|c|c|c|c}
+\begin{tabular}{c|c|c|c|c|cc｜}
     \hline
-    \multirow{3}{*}{Data}& \multirow{3}{*}{Number of rows}& \multicolumn{4}{c}{TabSynDex Score}\\ \cline{3-6}
-         &  & \multicolumn{4}{c}{\% of real data treated as synthetic}\\ \cline{3-6}
-        & &10\%&25\%&50\%&100\%\\ \hline
-        Concrete~\cite{concrete_data} &1030&0.768&0.869&0.914&0.894\\ \hline
-        News Popularity~\cite{news_data} &39644&0.891&0.916&0.901&0.898\\ \hline
-        Wine Quality~\cite{wine_data} &4898&0.867&0.911&0.925&0.938\\ \hline
-        Power Plant~\cite{electrical_data} &9568&0.946&0.961&0.981&0.969\\ \hline
+    \multirow{3}{*}{Data} &  \multirow{3}{*}{Number of rows} &  NEW 0 &  \multicolumn{5}{c}{TabSynDex Score}\\ \cline{3-7}
+          &    &  NEW 1 &  \multicolumn{5}{c}{\% of real data treated as synthetic}\\ \cline{3-7}
+         &   & 10\% & 25\% & 50\% &  NEW 2 & 100\%\\ \hline
+        Concrete~\cite{concrete_data}  & 1030 & 0.768 & 0.869 & 0.914 &  NEW 3 & 0.894\\ \hline
+        News Popularity~\cite{news_data}  & 39644 & 0.891 & 0.916 & 0.901 &  NEW 4 & 0.898\\ \hline
+        Wine Quality~\cite{wine_data}  & 4898 & 0.867 & 0.911 & 0.925 &  NEW 5 & 0.938\\ \hline
+        Power Plant~\cite{electrical_data}  & 9568 & 0.946 & 0.961 & 0.981 &  NEW 6 & 0.969\\ \hline
     \end{tabular}
 }
 \caption{Experiment for sanity check of the TabSynDex metric for tabular data synthesis evaluation. The real dataset is divided into different subsets to check the similarity between them using TabSynDex.~\textit{A higher TabSynDex score is better}}

@@ -29,7 +29,7 @@ button = st.button("Run Analysis")
 if button:
     st.text("Table attributes:")
     st.text(check_text(latex1))
-    st.text("Length of the LaTeX content:")
+    st.text("Length of the first LaTeX content:")
     st.text(len(latex2))
     lengths = [len(str(x["latex_content"])) for x in dataset]
     df = pd.DataFrame({"length": lengths})
@@ -44,12 +44,15 @@ if button:
 
 # === Table selection ===
 default_index = st.session_state.get("table_index", 0)
-table_index = st.number_input("Select Table Index", min_value=0, max_value=len(dataset)-1, step=1, value=default_index)
-latex = dataset[table_index]["latex_content"]
-
+table_index1 = st.number_input("Select Table Index", min_value=0, max_value=len(dataset)-1, step=1, value=default_index)
+#latex = dataset[table_index]["latex_content"]
 # Use session state to persist edits
-if "working_latex" not in st.session_state or st.session_state.get("table_index", 0) != table_index:
+latex = dataset[table_index1]["latex_content"]
+if "working_latex" not in st.session_state or st.session_state.get("table_index",0) != table_index1:
+    latex = dataset[table_index1]["latex_content"]
     st.session_state["working_latex"] = latex
+    st.session_state["table_index"] = table_index1
+    st.write("Updated working_latex from dataset") 
 
 if "\\begin{tabular}" not in latex:
     st.warning("This table does not contain a tabular environment. Please choose another index.")
@@ -58,7 +61,7 @@ if "\\begin{tabular}" not in latex:
 # === Original LaTeX table rendering ===
 st.subheader("Original LaTeX Table")
 os.makedirs("outputs", exist_ok=True)
-outname_base = f"outputs/table_{table_index}_original"
+outname_base = f"outputs/table_{table_index1}_original"
 try:
     save_latex_as_image(latex, outname=outname_base)
     orig_path = f"{outname_base}.png"
@@ -79,6 +82,32 @@ except Exception as e:
 
 # === Modify table values ===
 st.subheader("Modify Values in the Table")
+with st.form(key="add_column_form"):
+    submitted2 = st.form_submit_button("Add New Column")
+
+if submitted2:
+    # Add a new column
+    st.session_state["working_latex"] = add_column_to_outermost_tabular(st.session_state["working_latex"])
+    modified_latex = st.session_state["working_latex"]
+    #print(modified_latex)
+    mod_outname_base = f"outputs/table_{table_index1}_modified_with_new_column"
+    try:
+        save_latex_as_image(modified_latex, outname=mod_outname_base)
+        mod_path = f"{mod_outname_base}.png"
+        st.subheader("Table with New Column")
+        left, center, right = st.columns([200,1, 1])
+        print(st.session_state["working_latex"])
+        with left:
+            with open(mod_path, "rb") as img_file:
+                st.image(img_file.read(), caption="Table After Adding Column")
+    except Exception as e:
+        st.error(f"Rendering failed after adding column: {e}")
+
+
+test = st.button("Test Button")
+if test:
+    st.text(st.session_state["working_latex"])
+
 
 with st.form(key="modify_form"):
     n_changes = st.number_input("How many values do you want to modify?", min_value=0, max_value=10, step=1)
@@ -91,15 +120,16 @@ with st.form(key="modify_form"):
             new_val = st.text_input(f"New Value #{i+1}", key=f"new_{i}")
         changes.append((old_val, new_val))
     submitted = st.form_submit_button("Apply Changes and Render")
-    submitted2 = st.form_submit_button("Add New Column")
+ 
 
 # === Render modified image ===
 if submitted:
     modified_latex = st.session_state["working_latex"]
+    #print(modified_latex)
     for old, new in changes:
         if old and new:
             modified_latex = modify_numeric_values(modified_latex, old, new)
-    mod_outname_base = f"outputs/table_{table_index}_modified"
+    mod_outname_base = f"outputs/table_{table_index1}_modified"
     try:
         save_latex_as_image(modified_latex, outname=mod_outname_base)
         st.session_state["working_latex"] = modified_latex
@@ -110,29 +140,14 @@ if submitted:
     except Exception as e:
         st.error(f"Rendering failed after modification: {e}")
 
-if submitted2:
-    # Add a new column
-    st.session_state["working_latex"] = add_column_to_outermost_tabular(st.session_state["working_latex"])
-    modified_latex = st.session_state["working_latex"]
-    mod_outname_base = f"outputs/table_{table_index}_modified_with_new_column"
-    try:
-        save_latex_as_image(modified_latex, outname=mod_outname_base)
-        mod_path = f"{mod_outname_base}.png"
-        st.subheader("Table with New Column")
-        left, center, right = st.columns([200,1, 1])
-        with left:
-            with open(mod_path, "rb") as img_file:
-                st.image(img_file.read(), caption="Table After Adding Column")
-    except Exception as e:
-        st.error(f"Rendering failed after adding column: {e}")
 
 # === Navigation buttons ===
 col1, col2 = st.columns(2)
 with col1:
     if st.button("Previous Table"):
-        st.session_state["table_index"] = (table_index - 1) % len(dataset)
+        st.session_state["table_index"] = (table_index1 - 1) % len(dataset)
         st.rerun()
 with col2:
     if st.button("Next Table"):
-        st.session_state["table_index"] = (table_index + 1) % len(dataset)
+        st.session_state["table_index"] = (table_index1 + 1) % len(dataset)
         st.rerun()

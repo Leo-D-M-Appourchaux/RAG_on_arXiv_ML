@@ -96,7 +96,7 @@ def insert_column(latex_str, col_index=1, default_value=""):
         new_lines.append(line)
     return '\n'.join(new_lines)
 
-def modify_column_spec(latex_line, addition="p{3cm}|"):
+def modify_column_spec(latex_line, default_addition="p{3cm}|", conditional_target="c|", conditional_addition="|c"):
     brace_count = 0
     first_done = False
     start_idx = None
@@ -118,6 +118,10 @@ def modify_column_spec(latex_line, addition="p{3cm}|"):
     if start_idx is not None and end_idx is not None:
         # Get original column spec
         colspec = latex_line[start_idx:end_idx]
+        if conditional_target in colspec:
+            addition = conditional_addition
+        else:
+            addition = default_addition
         new_colspec = colspec + addition
         return latex_line[:start_idx] + new_colspec + latex_line[end_idx:]
     else:
@@ -139,7 +143,7 @@ def add_column_to_outermost_tabular(latex_str, new_cell_value=" NEW ",default_nu
             if nest == 1:
                 inside_outer_tabular = True
                 original_start, colspec = match.groups()
-                line = modify_column_spec(line, addition="p{3cm}|")
+                line = modify_column_spec(line)
 
         elif r'\end{tabular}' in stripped:
             if nest == 1:
