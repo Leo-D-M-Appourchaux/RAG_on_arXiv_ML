@@ -76,6 +76,7 @@ async def rag(messages: list):
     for id in image_ids:
         bytes = await get_files(id)
         resized_bytes = await resize_base64_image(bytes)
+        show_base64_image(resized_bytes)
         images_bytes.append(resized_bytes)
     
     image_numbers = [i for i in range(len(images_bytes))]
