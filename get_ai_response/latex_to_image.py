@@ -151,3 +151,7 @@ def latex_to_io(latex_str, format="JPG"):
     image.save(img_io, format=format)
     img_io.seek(0)
     return img_io
+
+
+def modify_numeric_values(latex_str, old_val, new_val):
+    return latex_str.replace(old_val, new_val)
