@@ -23,8 +23,7 @@ NLPenv/
 *.db
 
 # Storage
-storage/
-docs_to_process/
+processed_data/
+extracted_data/
 weights_vect_model/
 outputs/
-extracted_data/

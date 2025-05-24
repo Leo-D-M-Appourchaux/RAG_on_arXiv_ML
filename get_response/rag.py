@@ -7,7 +7,7 @@ import base64
 # Add the parent directory to sys.path to enable imports from adjacent modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import LOCAL_STORAGE_PATH
+from config import PROCESSED_FOLDER
 from utils.search_in_db import combine_search_results
 from get_response.call_chat_model import generate_answer
 from utils.image_processing import resize_base64_image
@@ -15,7 +15,7 @@ from utils.image_processing import resize_base64_image
 
 
 async def get_files(image_id):
-    file_path = os.path.join(LOCAL_STORAGE_PATH, f"{image_id}_full.jpg")
+    file_path = os.path.join(PROCESSED_FOLDER, f"{image_id}_full.jpg")
     try:
         async with aiofiles.open(file_path, 'rb') as f : #f is the image that we open and f disappears once we get out of with 
             image_bytes = await f.read()

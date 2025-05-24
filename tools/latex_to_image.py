@@ -94,9 +94,6 @@ def latex_to_image_object(latex_str):
             doc.generate_pdf(temp_name, clean_tex=True)
         except Exception as e:
             print(f"LaTeX compilation failed: {e}")
-            # Optionally save the problematic .tex file for debugging
-            with open(f"debug_latex_{hash(latex_str) % 10000}.tex", "w") as f:
-                f.write(doc.dumps())
             raise
             
         pdf_path = f"{temp_name}.pdf"

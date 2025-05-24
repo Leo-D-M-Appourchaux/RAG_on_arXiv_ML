@@ -8,8 +8,8 @@ import os
 load_dotenv(override=True)
 
 """Storage stuff"""
-LOCAL_STORAGE_PATH = "storage"
-ORIGIN_FOLDER = "docs_to_process"
+PROCESSED_FOLDER = "processed_data"
+EXTRACTION_FOLDER = "extracted_data"
 
 
 """Database stuff"""

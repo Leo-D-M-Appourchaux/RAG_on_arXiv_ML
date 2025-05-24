@@ -8,7 +8,7 @@ from PIL import Image
 # Add the parent directory to sys.path to enable imports from adjacent modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import LOCAL_STORAGE_PATH, LOCAL_DB_PATH, ORIGIN_FOLDER
+from config import PROCESSED_FOLDER, LOCAL_DB_PATH, EXTRACTION_FOLDER
 from database.getters_status import get_document_processing_status
 from vectorization.class_embedding_queue import embedding_queue
 from database.setters_documents import db_store_pdf_file
@@ -129,10 +129,10 @@ async def save_to_local(file_content: bytes, filename: str):
         filename (str): The filename to use for saving, including extension (e.g., '123.pdf' or '456_full.jpg').
     """
     # Ensure the storage directory exists
-    os.makedirs(LOCAL_STORAGE_PATH, exist_ok=True)
+    os.makedirs(PROCESSED_FOLDER, exist_ok=True)
     
     # Construct the full file path
-    file_path = os.path.join(LOCAL_STORAGE_PATH, filename)
+    file_path = os.path.join(PROCESSED_FOLDER, filename)
     
     # Use a helper function via run_in_executor to avoid blocking
     def write_file():
@@ -435,7 +435,7 @@ async def monitor_document_progress(document_id: UUID, filename: str, images: Li
 
 
 
-async def process_single_pdf(pdf_path: str, timeout: int = 3600):
+async def process_single_pdf(pdf_path: str, timeout: int = 3600) -> Tuple[Optional[UUID], Optional[asyncio.Task]]:
     """Process a single PDF file with consistent IDs across folder and DB"""
     try:
         # Generate document ID - will be used consistently in both folder and DB
@@ -456,6 +456,27 @@ async def process_single_pdf(pdf_path: str, timeout: int = 3600):
         total_pages = len(images)
 
         print(f"Extracted {total_pages} images and text from {filename}")
+
+        # Try to find LaTeX code files for each page
+        latex_codes = []
+        base_path = os.path.splitext(pdf_path)[0]
+        for i in range(total_pages):
+            latex_path = f"{base_path}/sample_{i}.txt"  # Assuming pages are 1-indexed in filenames
+            if os.path.exists(latex_path):
+                try:
+                    with open(latex_path, 'r', encoding='utf-8') as f:
+                        latex_code = f.read()
+                    latex_codes.append(latex_code)
+                except Exception as e:
+                    print(f"Error reading LaTeX file {latex_path}: {str(e)}")
+                    latex_codes.append(None)
+            else:
+                latex_codes.append(None)
+        
+        # Pad latex_codes if necessary
+        while len(latex_codes) < total_pages:
+            latex_codes.append(None)
+        
         documents_in_process[str(document_id)]["status"] = "metadata"
         documents_in_process[str(document_id)]["total_pages"] = total_pages
 
@@ -474,7 +495,8 @@ async def process_single_pdf(pdf_path: str, timeout: int = 3600):
             document_id=str(document_id),
             title=filename,
             page_texts=text_pages,
-            page_ids=page_ids  # Pass page_ids to database function
+            page_ids=page_ids,
+            latex_codes=latex_codes
         )
         
         # Track successfully processed pages
@@ -718,7 +740,7 @@ async def process_pdf_folder(folder_path: str, concurrent_limit: int = 2, timeou
 async def main():
     """Main async function to run the whole process"""
     # Folder containing PDFs and images
-    DOCS_FOLDER = ORIGIN_FOLDER
+    DOCS_FOLDER = EXTRACTION_FOLDER
     
     # Make sure the embedding queue background tasks are started
     # This will work because we're already inside an event loop (asyncio.run creates one)

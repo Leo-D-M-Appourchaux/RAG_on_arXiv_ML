@@ -1,20 +1,18 @@
 # admin/extract_from_dataset.py
 
-import os
-import sys
-import argparse
 from datasets import load_dataset
-from PIL import Image
-from io import BytesIO
-import json
-import tqdm
 import concurrent.futures
+from io import BytesIO
+from PIL import Image
+import argparse
+import tqdm
+import sys
+import os
 
 # Add the parent directory to sys.path to enable imports from adjacent modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Define the default output directory
-DEFAULT_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "extracted_data")
+from config import EXTRACTION_FOLDER
 
 
 
@@ -23,8 +21,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Extract images and LaTeX code from the ArXiv-tables dataset")
     parser.add_argument("-n", "--num_samples", type=int, default=10, 
                         help="Number of samples to extract (default: 10)")
-    parser.add_argument("-o", "--output_dir", type=str, default=DEFAULT_OUTPUT_DIR,
-                        help=f"Output directory for extracted files (default: {DEFAULT_OUTPUT_DIR})")
+    parser.add_argument("-o", "--output_dir", type=str, default=EXTRACTION_FOLDER,
+                        help=f"Output directory for extracted files (default: {EXTRACTION_FOLDER})")
     parser.add_argument("-b", "--batch_size", type=int, default=4,
                         help="Batch size for processing (default: 4)")
     return parser.parse_args()
@@ -45,12 +43,12 @@ def process_sample(sample, index, output_dir):
         # Extract image and save as JPG
         img_bytes = sample["page_image"]
         img = Image.open(BytesIO(img_bytes))
-        img_path = os.path.join(output_dir, f"sample_{index:05d}.jpg")
+        img_path = os.path.join(output_dir, f"sample_{index}.jpg")
         img.save(img_path, optimize=True)
         
         # Extract LaTeX content and save as TXT
         latex_content = sample["latex_content"]
-        txt_path = os.path.join(output_dir, f"sample_{index:05d}.txt")
+        txt_path = os.path.join(output_dir, f"sample_{index}.txt")
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(latex_content)
         
