@@ -11,7 +11,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import PROCESSED_FOLDER
 from database.search_in_db import combine_search_results
-from get_response.call_chat_model import generate_answer
+from get_ai_response.call_chat_model import generate_answer
 from database.image_processing import resize_base64_image
 
 
@@ -56,13 +56,25 @@ async def rag(messages: list):
         bytes = await get_files(id)
         resized_bytes = await resize_base64_image(bytes)
         images_bytes.append(resized_bytes)
+    
+    image_numbers = [i for i in range(len(images_bytes))]
+    retriever_message = [{"role": "tool", "content": [{"type": "text", "text": str(image_numbers)}]}]
+    messages = messages + retriever_message
 
     streamer = await generate_answer(messages, images_bytes)
     full_answer = ""
     for chunk in streamer:
         full_answer += chunk
         print(chunk, end="", flush=True)
+
+    messages.append({
+            "role": "assistant",
+            "content": [{
+                "type": "text",
+                "text": full_answer
+            }]
+        })
     
     image_number, original_value, new_value = await catch_tool_call(full_answer)
 
-    return full_answer, image_number, original_value, new_value
+    return messages, image_number, original_value, new_value

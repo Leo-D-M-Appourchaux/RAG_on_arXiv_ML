@@ -1,8 +1,13 @@
 # get_ai_response/main.py
 
 import asyncio
+import sys
+import os
 
-from rag import rag
+# Add the parent directory to sys.path to enable imports from adjacent modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from get_ai_response.rag import rag
 
 
 
@@ -19,14 +24,7 @@ async def main():
             }]
         })
 
-        answer, image_number, original_value, new_value = await rag(messages)
-        messages.append({
-            "role": "assistant",
-            "content": [{
-                "type": "text",
-                "text": answer
-            }]
-        })
+        messages, image_number, original_value, new_value = await rag(messages)
 
         # execute tool
         # if image_number and original_value and new_value:
