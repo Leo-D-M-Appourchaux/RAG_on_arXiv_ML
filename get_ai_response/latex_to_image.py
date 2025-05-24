@@ -130,7 +130,7 @@ def save_latex_as_image(latex_str, outname: str):
 
 
 
-def latex_to_bytes(latex_str, format="JPG"):
+def latex_to_bytes(latex_str, format="PNG"):
     image = latex_to_image_object(latex_str)
     img_bytes = io.BytesIO()
     image.save(img_bytes, format=format)
@@ -139,13 +139,13 @@ def latex_to_bytes(latex_str, format="JPG"):
 
 
 
-def latex_to_base64(latex_str, format="JPG"):
+def latex_to_base64(latex_str, format="PNG"):
     img_bytes = latex_to_bytes(latex_str, format)
     return base64.b64encode(img_bytes).decode('utf-8')
 
 
 
-def latex_to_io(latex_str, format="JPG"):
+def latex_to_io(latex_str, format="PNG"):
     image = latex_to_image_object(latex_str)
     img_io = io.BytesIO()
     image.save(img_io, format=format)

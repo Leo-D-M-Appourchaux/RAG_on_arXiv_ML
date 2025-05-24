@@ -40,13 +40,14 @@ async def generate_answer(messages: list, images: list = None):
                 "type": "image", 
                 "image": f"data:image;base64,{image_bytes}"
             })
-    messages.append({"role": "user", "content": content})
+    message_retriever = [{"role": "user", "content": content}]
+    conv_to_send = messages + message_retriever
     
     try:
         text = processor.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
+            conv_to_send, tokenize=False, add_generation_prompt=True
         )
-        image_inputs, video_inputs = process_vision_info(messages)
+        image_inputs, video_inputs = process_vision_info(conv_to_send)
         inputs = processor(
             text=[text],
             images=image_inputs,
