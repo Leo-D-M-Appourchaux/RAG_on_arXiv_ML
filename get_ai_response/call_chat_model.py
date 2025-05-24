@@ -65,7 +65,7 @@ async def generate_answer(messages: list, images: list = None):
         generation_kwargs = {
             **inputs,
             "streamer": streamer,
-            "max_new_tokens": 128
+            "max_new_tokens": 1024
         }
         
         # Create a thread to run the generation
