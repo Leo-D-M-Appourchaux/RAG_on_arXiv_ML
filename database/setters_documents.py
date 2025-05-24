@@ -85,27 +85,3 @@ async def db_store_pdf_file(
         except Exception as e:
             await conn.rollback()
             raise ValueError(f"Failed to store PDF file: {str(e)}")
-
-
-
-# Should prob keep this private or admin only, can always redo the db if needed
-async def _db_remove_pdf_data(document_id: str) -> None:
-    async with aiosqlite.connect(LOCAL_DB_PATH) as conn:
-        await conn.execute("BEGIN")
-        try:
-            await conn.execute("""
-                DELETE FROM page_images_vectors
-                WHERE page_id IN (
-                    SELECT page_id FROM page_images WHERE document_id = ?
-                )
-            """, (document_id,))
-            await conn.execute("""
-                DELETE FROM page_images WHERE document_id = ?
-            """, (document_id,))
-            await conn.execute("""
-                DELETE FROM documents WHERE document_id = ?
-            """, (document_id,))
-            await conn.commit()
-        except Exception as e:
-            await conn.rollback()
-            raise ValueError(f"Failed to remove document and its associated data: {str(e)}")

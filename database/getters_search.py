@@ -38,28 +38,3 @@ async def db_get_vector_list(query_vector: list[float], amount: int) -> list[dic
             raise
         finally:
             await conn._execute(conn._conn.enable_load_extension, False)
-
-
-
-async def db_search_keywords(keyword: str, amount: int) -> list[dict]:
-    async with aiosqlite.connect(LOCAL_DB_PATH) as conn:
-        conn.row_factory = aiosqlite.Row
-        
-        query = """
-            SELECT
-                page_id,
-                page_text
-            FROM page_images
-            WHERE page_text IS NOT NULL 
-                AND LOWER(page_text) LIKE LOWER(?)
-            LIMIT ?;
-        """
-        params = (f"%{keyword}%", amount)
-        
-        try:
-            async with conn.execute(query, params) as cursor:
-                results = await cursor.fetchall()
-                return [{'page_id': row['page_id'], 'page_text': row['page_text']} for row in results]
-        except Exception as e:
-            print(f"Database query failed: {e}")
-            raise

@@ -8,9 +8,9 @@ import base64
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import PROCESSED_FOLDER
-from utils.search_in_db import combine_search_results
+from database.search_in_db import combine_search_results
 from get_response.call_chat_model import generate_answer
-from utils.image_processing import resize_base64_image
+from database.image_processing import resize_base64_image
 
 
 
@@ -27,9 +27,11 @@ async def get_files(image_id):
         print(f"Error processing image {image_id}: {str(e)}")
     return None
 
+
+
 async def rag(messages: list):
     query = messages[-1]["content"][0]["text"]
-    image_ids = await combine_search_results(query, [])
+    image_ids = await combine_search_results(query)
     images_bytes = []
     for id in image_ids:
         bytes = await get_files(id)
