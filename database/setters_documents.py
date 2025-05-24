@@ -34,7 +34,7 @@ async def _db_store_image_with_vector(
     page_text: str,
     vector_data: Optional[List[float]] = None,
     page_id: Optional[str] = None,
-    latex_codes: Optional[str] = None
+    latex_code: Optional[str] = None
 ) -> str:
     print(f"Vector data: {vector_data}")
 
@@ -43,10 +43,10 @@ async def _db_store_image_with_vector(
 
     query = """
         INSERT INTO page_images (
-            page_id, document_id, page_number, page_text, latex_codes
+            page_id, document_id, page_number, page_text, latex_code
         ) VALUES (?, ?, ?, ?, ?)
     """
-    await conn.execute(query, (page_id, document_id, page_number, page_text, latex_codes))
+    await conn.execute(query, (page_id, document_id, page_number, page_text, latex_code))
 
     if vector_data:
         vector_query = """
@@ -65,7 +65,7 @@ async def db_store_pdf_file(
     page_texts: List[str],
     vectors: Optional[List[List[float]]] = None,
     page_ids: Optional[List[str]] = None,
-    latex_codes: Optional[List[str]] = None,
+    latex_code: Optional[List[str]] = None,
 ) -> None:
     async with aiosqlite.connect(LOCAL_DB_PATH) as conn:
         await conn.execute("BEGIN")
@@ -78,9 +78,8 @@ async def db_store_pdf_file(
             for i, page_text in enumerate(page_texts):
                 page_vector = vectors[i] if vectors and i < len(vectors) else None
                 page_id = page_ids[i] if page_ids and i < len(page_ids) else None
-                page_latex = latex_codes[i] if latex_codes and i < len(latex_codes) else None
                 await _db_store_image_with_vector(
-                    conn, document_id, i, page_text, page_vector, page_id, page_latex
+                    conn, document_id, i, page_text, page_vector, page_id, latex_code
                 )
             await conn.commit()
         except Exception as e:

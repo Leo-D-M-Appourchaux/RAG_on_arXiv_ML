@@ -435,7 +435,7 @@ async def monitor_document_progress(document_id: UUID, filename: str, images: Li
 
 
 
-async def process_single_pdf(pdf_path: str, timeout: int = 3600) -> Tuple[Optional[UUID], Optional[asyncio.Task]]:
+async def process_single_pdf(pdf_path: str, timeout: int = 3600):
     """Process a single PDF file with consistent IDs across folder and DB"""
     try:
         # Generate document ID - will be used consistently in both folder and DB
@@ -456,26 +456,6 @@ async def process_single_pdf(pdf_path: str, timeout: int = 3600) -> Tuple[Option
         total_pages = len(images)
 
         print(f"Extracted {total_pages} images and text from {filename}")
-
-        # Try to find LaTeX code files for each page
-        latex_codes = []
-        base_path = os.path.splitext(pdf_path)[0]
-        for i in range(total_pages):
-            latex_path = f"{base_path}/sample_{i}.txt"  # Assuming pages are 1-indexed in filenames
-            if os.path.exists(latex_path):
-                try:
-                    with open(latex_path, 'r', encoding='utf-8') as f:
-                        latex_code = f.read()
-                    latex_codes.append(latex_code)
-                except Exception as e:
-                    print(f"Error reading LaTeX file {latex_path}: {str(e)}")
-                    latex_codes.append(None)
-            else:
-                latex_codes.append(None)
-        
-        # Pad latex_codes if necessary
-        while len(latex_codes) < total_pages:
-            latex_codes.append(None)
         
         documents_in_process[str(document_id)]["status"] = "metadata"
         documents_in_process[str(document_id)]["total_pages"] = total_pages
@@ -495,8 +475,7 @@ async def process_single_pdf(pdf_path: str, timeout: int = 3600) -> Tuple[Option
             document_id=str(document_id),
             title=filename,
             page_texts=text_pages,
-            page_ids=page_ids,
-            latex_codes=latex_codes
+            page_ids=page_ids
         )
         
         # Track successfully processed pages
@@ -560,7 +539,10 @@ async def process_single_image(image_path: str, timeout: int = 3600):
         document_id = uuid4()
         filename = os.path.basename(image_path)
         print(f"Processing image {image_path}")
-        
+
+        latex_path = image_path.replace(".jpg", ".txt")
+        print(f"Looking for LaTeX file: {latex_path}")
+
         # Track start time
         start_time = time.time()
         documents_in_process[str(document_id)] = {
@@ -568,6 +550,12 @@ async def process_single_image(image_path: str, timeout: int = 3600):
             "start_time": start_time,
             "status": "extracting"
         }
+
+        try:
+            with open(latex_path, 'r', encoding='utf-8') as f:
+                latex_code = f.read()
+        except Exception as e:
+            print(f"Error reading LaTeX file {latex_path}: {str(e)}")
 
         # Extract image bytes
         images, text_pages = await image_to_image_and_text(image_path)
@@ -597,7 +585,8 @@ async def process_single_image(image_path: str, timeout: int = 3600):
             document_id=str(document_id),
             title=filename,
             page_texts=text_pages,
-            page_ids=page_ids
+            page_ids=page_ids,
+            latex_code=latex_code
         )
         
         # Process and store images to folder

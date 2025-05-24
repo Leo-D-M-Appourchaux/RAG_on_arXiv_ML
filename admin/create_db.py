@@ -38,7 +38,7 @@ CREATE TABLE page_images (
     document_id TEXT NOT NULL,
     page_number INTEGER NOT NULL,
     page_text TEXT NOT NULL,
-    latex_codes TEXT,
+    latex_code TEXT,
     FOREIGN KEY (document_id) REFERENCES documents(document_id)
 )
 """)
