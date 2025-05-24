@@ -5,6 +5,11 @@ import base64
 import json
 import sys
 import os
+from database.getters_latex import db_get_image_latex
+from get_ai_response.latex_to_image import modify_numeric_values, latex_to_base64
+import cv2
+import base64
+import numpy as np
 
 # Add the parent directory to sys.path to enable imports from adjacent modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -47,6 +52,22 @@ async def catch_tool_call(text: str):
     return None, None, None
 
 
+def show_base64_image(base64_str):
+    # Decode base64 string to bytes
+    image_data = base64.b64decode(base64_str)
+
+    # Convert bytes to NumPy array
+    np_arr = np.frombuffer(image_data, np.uint8)
+
+    # Decode image from NumPy array
+    image = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+
+    # Display the image
+    cv2.imshow("Base64 Image", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
 
 async def rag(messages: list):
     query = messages[-1]["content"][0]["text"]
@@ -81,5 +102,10 @@ async def rag(messages: list):
     
     if image_number: 
         target_id = image_ids[image_number]
+        latex_code = db_get_image_latex(target_id)
+        new_latex = modify_numeric_values(latex_code, original_value, new_value)
+        image_base64 = latex_to_base64(new_latex)
+        show_base64_image(image_base64)
+        
 
     return messages, target_id, original_value, new_value
