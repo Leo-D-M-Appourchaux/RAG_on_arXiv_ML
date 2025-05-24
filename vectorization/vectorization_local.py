@@ -39,7 +39,7 @@ async def embed_text(request: dict):
         embeddings = []
         
         for text in request["texts"]:
-            print(f"Processing query: {text}")
+            print(f"Processing user query: {text}\n")
             
             query_embedding = model.get_query_embedding(text)
             

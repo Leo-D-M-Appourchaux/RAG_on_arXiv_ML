@@ -1,6 +1,11 @@
-from transformers import Qwen2_5_VLForConditionalGeneration, AutoTokenizer, AutoProcessor
+# get_ai_response/call_chat_model.py
+
+from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor, TextIteratorStreamer
 from qwen_vl_utils import process_vision_info
+import threading
 import torch
+
+
 
 # Set up device
 if torch.backends.mps.is_available():
@@ -25,13 +30,16 @@ model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
 )
 processor = AutoProcessor.from_pretrained("Qwen/Qwen2.5-VL-3B-Instruct")
 
-async def generate_answer(messages: list, images: list):
+
+
+async def generate_answer(messages: list, images: list = None):
     content = []
-    for image_bytes in images:
-        content.append({
-            "type": "image", 
-            "image": f"data:image;base64,{image_bytes}"
-        })
+    if images:
+        for image_bytes in images:
+            content.append({
+                "type": "image", 
+                "image": f"data:image;base64,{image_bytes}"
+            })
     messages.append({"role": "user", "content": content})
     
     try:
@@ -48,13 +56,24 @@ async def generate_answer(messages: list, images: list):
         )
         inputs = inputs.to(DEVICE)
         
-        generated_ids = model.generate(**inputs, max_new_tokens=128)
-        generated_ids_trimmed = [
-            out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-        ]
-        output_text = processor.batch_decode(
-            generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
+        streamer = TextIteratorStreamer(
+            processor.tokenizer, 
+            skip_special_tokens=True, 
+            skip_prompt=True
         )
-        return(output_text)
+        
+        generation_kwargs = {
+            **inputs,
+            "streamer": streamer,
+            "max_new_tokens": 128
+        }
+        
+        # Create a thread to run the generation
+        thread = threading.Thread(target=model.generate, kwargs=generation_kwargs)
+        thread.start()
+        
+        # Return the streamer that will yield tokens
+        return streamer
+        
     except Exception as e:
-        print(f"Error: {e}")
+        return iter(["Error generating response: " + str(e)])

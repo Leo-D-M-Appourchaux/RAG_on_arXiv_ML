@@ -1,8 +1,10 @@
-import os
+# get_ai_response/rag.py
+
 import aiofiles
-import asyncio
-import sys
 import base64
+import json
+import sys
+import os
 
 # Add the parent directory to sys.path to enable imports from adjacent modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,6 +31,23 @@ async def get_files(image_id):
 
 
 
+async def catch_tool_call(text: str):
+    if text.startswith("{"):
+        try:
+            json_code = json.loads(text)
+
+            image_number = json_code['image_number']
+            original_value = json_code['original_value']
+            new_value = json_code['new_value']
+            
+            return image_number, original_value, new_value
+        except json.JSONDecodeError:
+            print("Error decoding JSON")
+            return None, None, None
+    return None, None, None
+
+
+
 async def rag(messages: list):
     query = messages[-1]["content"][0]["text"]
     image_ids = await combine_search_results(query)
@@ -37,16 +56,13 @@ async def rag(messages: list):
         bytes = await get_files(id)
         resized_bytes = await resize_base64_image(bytes)
         images_bytes.append(resized_bytes)
-    answer = await generate_answer(messages, images_bytes)
-    print(answer)
-    
-messages = [{
-    "role": "user",
-    "content": [{
-        "type": "text",
-        "text": "Make a short synthesis of the algorithm 3"
-    }]
-}]
 
-if __name__ == "__main__":
-    asyncio.run(rag(messages))
+    streamer = await generate_answer(messages, images_bytes)
+    full_answer = ""
+    for chunk in streamer:
+        full_answer += chunk
+        print(chunk, end="", flush=True)
+    
+    image_number, original_value, new_value = await catch_tool_call(full_answer)
+
+    return full_answer, image_number, original_value, new_value

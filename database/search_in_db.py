@@ -10,8 +10,6 @@ async def get_similar_vectors(query: str, amount: int) -> list:
     # Pause current image embedding if any
     await embedding_queue.pause_current_task()
 
-    print(f"In get_similar_vectors: {query}, {amount}")
-
     try:
         payload = {"texts": [query]}    
         text_vector = await embed_text(payload)
@@ -28,11 +26,10 @@ async def get_similar_vectors(query: str, amount: int) -> list:
 
 
 
-async def combine_search_results(optimized_query: str, max_results: int = 6) -> list[str]:
-    print(f"In combine_search_results: {optimized_query}, {max_results}")
+async def combine_search_results(optimized_query: str, max_results: int = 3) -> list[str]:
     vector_image_ids = await get_similar_vectors(optimized_query, amount=max_results)
 
-    print(f"Vector image IDs: {vector_image_ids}")
+    print(f"Vector image IDs retrieved by the system: {vector_image_ids}\n")
 
     # Process image IDs
     seen_ids = set()

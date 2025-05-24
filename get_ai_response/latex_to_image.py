@@ -1,12 +1,13 @@
+# get_ai_response/latex_to_image.py
+
+from pdf2image import convert_from_path
+from pylatex import Document, NoEscape
 import tempfile
-import os
 import shutil
-import io
 import base64
 import re
-from pylatex import Document, NoEscape
-from pdf2image import convert_from_path
-
+import io
+import os
 
 
 def auto_complete_latex_environments(latex_str):
@@ -118,7 +119,7 @@ def latex_to_image_object(latex_str):
 
 
 
-def save_latex_as_image(latex_str, outname="outputs/output"):
+def save_latex_as_image(latex_str, outname: str):
     os.makedirs("outputs", exist_ok=True)
     print("Starting render:", outname)
     image = latex_to_image_object(latex_str)
@@ -129,7 +130,7 @@ def save_latex_as_image(latex_str, outname="outputs/output"):
 
 
 
-def latex_to_bytes(latex_str, format="PNG"):
+def latex_to_bytes(latex_str, format="JPG"):
     image = latex_to_image_object(latex_str)
     img_bytes = io.BytesIO()
     image.save(img_bytes, format=format)
@@ -138,13 +139,13 @@ def latex_to_bytes(latex_str, format="PNG"):
 
 
 
-def latex_to_base64(latex_str, format="PNG"):
+def latex_to_base64(latex_str, format="JPG"):
     img_bytes = latex_to_bytes(latex_str, format)
     return base64.b64encode(img_bytes).decode('utf-8')
 
 
 
-def latex_to_io(latex_str, format="PNG"):
+def latex_to_io(latex_str, format="JPG"):
     image = latex_to_image_object(latex_str)
     img_io = io.BytesIO()
     image.save(img_io, format=format)

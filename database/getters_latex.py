@@ -1,4 +1,4 @@
-# database/getters_images.py
+# database/getters_latex.py
 
 import aiosqlite
 

@@ -4,7 +4,7 @@ import math
 import base64
 
 
-async def resize_base64_image(base64_string: str, max_pixels: int = 1000000) -> str:
+async def resize_base64_image(base64_string: str, max_pixels: int = 500000) -> str:
     try:
         image_bytes = base64.b64decode(base64_string)
         img = Image.open(io.BytesIO(image_bytes))

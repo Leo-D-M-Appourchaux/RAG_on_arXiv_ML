@@ -1,7 +1,13 @@
+# get_ai_response/call_latex_to_image_example.py
+
 from datasets import load_dataset
 import glob
 import os
-from latex_to_image import latex_to_image_object
+
+
+from get_ai_response.latex_to_image import latex_to_image_object
+
+
 
 # Load dataset
 dataset = load_dataset("staghado/ArXiv-tables") 
