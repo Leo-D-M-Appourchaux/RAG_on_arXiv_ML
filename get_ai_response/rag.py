@@ -76,5 +76,10 @@ async def rag(messages: list):
         })
     
     image_number, original_value, new_value = await catch_tool_call(full_answer)
+    
+    target_id = None
+    
+    if image_number: 
+        target_id = image_ids[image_number]
 
-    return messages, image_number, original_value, new_value
+    return messages, target_id, original_value, new_value
