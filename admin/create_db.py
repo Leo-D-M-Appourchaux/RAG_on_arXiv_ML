@@ -38,6 +38,7 @@ CREATE TABLE page_images (
     document_id TEXT NOT NULL,
     page_number INTEGER NOT NULL,
     page_text TEXT NOT NULL,
+    latex_codes TEXT,
     FOREIGN KEY (document_id) REFERENCES documents(document_id)
 )
 """)
@@ -55,7 +56,7 @@ cursor.execute("""
 CREATE TRIGGER delete_page_images_vector
 AFTER DELETE ON page_images
 BEGIN
-    DELETE FROM page_images_vectors WHERE page_id = OLD(page_id);
+    DELETE FROM page_images_vectors WHERE page_id = OLD.page_id;
 END;
 """)
 

@@ -26,3 +26,5 @@ NLPenv/
 storage/
 docs_to_process/
 weights_vect_model/
+outputs/
+extracted_data/
