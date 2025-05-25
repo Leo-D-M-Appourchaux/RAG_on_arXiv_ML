@@ -33,10 +33,6 @@ async def main():
         messages, image_ids = await rag(messages, old_image_ids)
         old_image_ids = image_ids
 
-        # execute tool
-        # if image_number and original_value and new_value:
-        #     
-
 
 if __name__ == "__main__":
     asyncio.run(main())

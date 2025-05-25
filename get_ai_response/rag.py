@@ -124,20 +124,20 @@ async def rag(messages: list, old_image_ids: list = None):
     
     target_id = None
     
-    print("Image number:", image_number)
-    print("Original value:", original_value)
-    print("New value:", new_value)
+    # print("Image number:", image_number)
+    # print("Original value:", original_value)
+    # print("New value:", new_value)
     
     if image_number:
-        print("Image number found")
+        # print("Image number found")
         target_id = old_image_ids[int(image_number) % 3]
-        print("Target image id:", target_id)
+        # print("Target image id:", target_id)
         latex_code = await db_get_image_latex(target_id)
-        print("Latex code generated")
+        # print("Latex code generated")
         new_latex = modify_numeric_values(latex_code, str(original_value), str(new_value))
-        print("Latex code modified")
+        # print("Latex code modified")
         image_base64 = latex_to_base64(new_latex)
-        print("Image base64 generated")
+        # print("Image base64 generated")
         await show_base64_image(image_base64)
         
     return messages, image_ids
